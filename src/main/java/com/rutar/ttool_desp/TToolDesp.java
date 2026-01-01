@@ -3,9 +3,13 @@ package com.rutar.ttool_desp;
 import java.io.*;
 import java.awt.*;
 import java.net.*;
+import java.nio.*;
 import java.util.*;
 import javax.swing.*;
 import java.util.jar.*;
+import java.nio.file.*;
+import javax.imageio.*;
+import java.awt.image.*;
 import java.awt.event.*;
 import java.nio.charset.*;
 import javax.swing.event.*;
@@ -13,9 +17,11 @@ import javax.swing.table.*;
 import com.formdev.flatlaf.*;
 import javax.swing.filechooser.*;
 import com.formdev.flatlaf.themes.*;
+import org.apache.commons.compress.compressors.bzip2.*;
 
 import static javax.swing.JOptionPane.*;
 import static javax.swing.JFileChooser.*;
+import static java.awt.image.BufferedImage.*;
 
 // ............................................................................
 /// Головний клас програми
@@ -29,7 +35,7 @@ private File inputFile;                                         // вхідни�
 
 private final JFileChooser fileOpen;           // відкривання/збереження файлів
 // private final JFileChooser fntCompile;               // компілювання шрифтів
-// private final JFileChooser fntDecompile;           // декомпілювання шрифтів
+private final JFileChooser fntDecompile;              // декомпілювання шрифтів
 // private final JFileChooser rawCompile;                 // компілювання даних
 // private final JFileChooser rawDecompile;             // декомпілювання даних
 
@@ -40,16 +46,16 @@ private boolean dataWasChanged;                // якщо true - дані бу�
 
 // ............................................................................
 
-// private byte[] allBytes;                                // всі зчитані байти
-// private ByteBuffer buffer;                     // буфер для зчитування даних
+private byte[] allBytes;                                   // всі зчитані байти
+private ByteBuffer buffer;                        // буфер для зчитування даних
 
 // Домашня директорія користувача
 private final File homeDir = FileSystemView.getFileSystemView()
                                            .getHomeDirectory();
 
-// Фільтр для файлів із розширенням *.test
-private final FileNameExtensionFilter extTest =
-          new FileNameExtensionFilter("Особливий тип файлу", "test");
+// Фільтр для файлів із розширенням *.fnt
+private final FileNameExtensionFilter extFnt =
+          new FileNameExtensionFilter("Desperados файли шрифтів", "fnt");
 
 private SearchDialog searchDialog;         // діалогове вікно пошуку інформації
 
@@ -65,9 +71,15 @@ initComponents();
 fileOpen = new JFileChooser();
 fileOpen.setFileSelectionMode(FILES_AND_DIRECTORIES);
 //fileOpen.removeChoosableFileFilter(fileOpen.getChoosableFileFilters()[0]);
-fileOpen.addChoosableFileFilter(extTest);
+fileOpen.addChoosableFileFilter(extFnt);
 fileOpen.setCurrentDirectory(homeDir);
 //fileOpen.setSelectedFile(new File("..."));
+
+fntDecompile = new JFileChooser();
+fntDecompile.setFileSelectionMode(FILES_ONLY);
+fileOpen.removeChoosableFileFilter(fileOpen.getChoosableFileFilters()[0]);
+fntDecompile.addChoosableFileFilter(extFnt);
+fntDecompile.setCurrentDirectory(homeDir);
 
 }
 
@@ -102,43 +114,8 @@ public static void main (String args[]) {
 
 private void showOpenDialog() {
 
-int result = fileOpen.showOpenDialog(this);
-if (result != JFileChooser.APPROVE_OPTION) { return; }
-
-openTestFile();
-
-}
-
-// ============================================================================
-/// Відкривання *.test файлів
-
-private void openTestFile() {
-
-prepareNewTable();
-
-// ............................................................................
-
-try {
-
-ArrayList<String> newRow = new ArrayList<>();
-
-for (int z = 1; z <= 9; z++) {
-    
-    newRow.clear();
-    newRow.add(String.valueOf(z));
-    newRow.add("Key_"   + z);
-    newRow.add("Value_" + z);
-    tableModel.addRow(newRow.toArray(String[]::new));
-
-}
-}
-
-catch (Exception ex) { showMessageDialog(this, "Помилка читання файлу: " +
-                                                ex.getMessage()); }
-
-// ............................................................................
-    
-finalizeNewTable();
+//int result = fileOpen.showOpenDialog(this);
+//if (result != JFileChooser.APPROVE_OPTION) { return; }
 
 }
 
@@ -147,18 +124,9 @@ finalizeNewTable();
 
 private void showSaveDialog() {
 
-fileOpen.setSelectedFile(inputFile);
-int result = fileOpen.showSaveDialog(this);
-if (result != JFileChooser.APPROVE_OPTION) { return; }
-
-saveTestFile();
-
-}
-
-// ============================================================================
-/// Збереження *.test файлів
-
-private void saveTestFile() {
+//fileOpen.setSelectedFile(inputFile);
+//int result = fileOpen.showSaveDialog(this);
+//if (result != JFileChooser.APPROVE_OPTION) { return; }
 
 }
 
@@ -241,6 +209,154 @@ if (answer == YES_OPTION) { System.exit(0); }
 }
 
 // ============================================================================
+/// Вибір шрифту для розпакування
+
+private void showDecompileFontDialog() {
+
+int result = fntDecompile.showOpenDialog(this);
+if (result != JFileChooser.APPROVE_OPTION) { return; }
+
+inputFile = fntDecompile.getSelectedFile();
+
+try { allBytes = Files.readAllBytes(inputFile.toPath()); }
+
+catch (IOException e) { System.out.println("Decompile font error");
+                        e.printStackTrace();
+                        return; }
+
+// ............................................................................
+
+byte[] data;
+buffer = ByteBuffer.wrap(allBytes);
+buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+// Сигнатура - uint8_t[6] signature
+data = new byte[6];
+buffer.get(data);
+if (debug) { System.out.println("Signature: " + new String(data)); }
+
+// Доп. змінна - uint32_t unk_dword_00
+int aInt = buffer.getInt();
+if (debug) { System.out.println("Type_1?: " + aInt); }
+
+// Назва шрифту - uint8_t[36] font_name
+data = new byte[36];
+buffer.get(data);
+if (debug) { System.out.println("Font name: " + new String(data)); }
+
+// Тип чогось - uint16_t unk_word_00 // Type of something?
+short aShort = buffer.getShort();
+if (debug) { System.out.println("Type_2?: " + aShort); }
+
+// Тип чогось - uint16_t unk_word_01
+short a2Short = buffer.getShort();
+if (debug) { System.out.println("Type_3?: " + a2Short); }
+
+// Висота шрифта - uint32_t unk_dword_02 // Height?
+int fontHeight = buffer.getInt();
+if (debug) { System.out.println("FontHeight: " + fontHeight); }
+
+// Ширина симв. квадрату - uint32_t unk_dword_03 // Letter rectangle width(?)
+int leterRectangleWidth = buffer.getInt();
+if (debug) { System.out.println("RectangleWidth: " + leterRectangleWidth); }
+
+// Макс. ширина символу - uint32_t unk_dword_04 // Maximum letter width(?)
+int maxLetterWidth = buffer.getInt();
+if (debug) { System.out.println("MaxLetterWidth: " + maxLetterWidth); }
+
+// Кількість символів у шрифті - uint32_t entry_count
+int entryCount = buffer.getInt();
+if (debug) { System.out.println("EntryCount: " + entryCount); }
+
+// Перевірка заданої умови
+if (aInt >= 512) {
+    // Невідома змінна - uint32_t unk_dword_05 // x_coord + unk_dword_05?
+    int a2Int = buffer.getInt();
+    if (debug) { System.out.println("Type_4?: " + a2Int); }
+}
+
+// ............................................................................
+if (debug) { System.out.println(" --- Chars --- "); }
+
+for (int z = 0; z < entryCount; z++) {
+    
+    char aChar =  buffer.getChar(); // uint16_t char_value
+    int yCoord =  buffer.getInt();  // uint32_t y_coord
+    int lWidth =  buffer.getInt();  // uint32_t letter_width
+    int unkInt1 = buffer.getInt();  // uint32_t unk_dword_00
+    int unkInt2 = buffer.getInt();  // uint32_t unk_dword_01
+
+    // The "real" witdh is computed: letter_width + unk_dword_00 + unk_dword_01
+
+    if (debug) { System.out.println("\"" + aChar + "\" - "
+                                         + yCoord + ", " + lWidth + ", "
+                                         + unkInt1 + ", " + unkInt2); }
+}
+
+// ............................................................................
+if (debug) { System.out.println(" --- Images --- "); }
+
+for (int z = 1; z <= 2; z++) {
+
+    int color;
+    short width  = buffer.getShort(); // uint16_t width
+    short height = buffer.getShort(); // uint16_t height
+    int compType = buffer.getInt();   // uint32_t compression_type
+    int compSize = buffer.getInt();   // uint32_t size_compressed
+
+    File imgFile = new File(homeDir.getPath() + "/im_" + z + ".bmp");
+
+    data = new byte[compSize];
+    buffer.get(data); // uint8_t[size_compressed] compressed_data
+
+    data = decompress(data);
+
+    if (debug) { System.out.println("Image_" + z + ", " + width + "x" + height
+                                  + ", comp = " + compType
+                                  + ", size = " + compSize); }
+
+    BufferedImage image = new BufferedImage(width, height, TYPE_3BYTE_BGR);
+
+    ByteBuffer imageBuffer = ByteBuffer.wrap(data);
+    imageBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+    for (int r = 0; r < height; r++) {
+    for (int c = 0; c < width; c++) {
+
+        color = Utils.from565to888rgb(imageBuffer.getShort());
+        image.setRGB(c, r, color);
+
+    }
+    }
+
+try { ImageIO.write(image, "bmp", imgFile);
+      if (debug) { System.out.println("File im_" + z + ".bmp was written"); } }
+
+catch (IOException e)
+    { if (debug) { System.err.println("File im_" + z + ".bmp error"); } }
+
+}
+
+if (debug) { System.out.println(" --- /// --- "); }
+
+}
+
+// ============================================================================
+/// Вибір розпакованого шрифту для пакування
+
+private void showCompileFontDialog() {}
+
+// ============================================================================
+/// Вибір даних для розпакування
+
+private void showDecompileRawDialog() {}
+
+// ============================================================================
+/// Вибір розпакованих даних для пакування
+
+private void showCompileRawDialog() {}
+
+// ============================================================================
 /// Попередня ініціалізація нової таблиці
 
 private void prepareNewTable() {
@@ -312,6 +428,27 @@ lbl_colCount.setText(tmp);
 }
 
 // ============================================================================
+/// Розпакування даних, запакованих з допомогою алгоритму bzip2
+
+private byte[] decompress (byte[] compressed) {
+
+try (ByteArrayInputStream bais = new ByteArrayInputStream(compressed);
+     BZip2CompressorInputStream bzIn = new BZip2CompressorInputStream(bais);
+     ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+    int n;
+    byte[] byteBuffer = new byte[8192];
+    
+    while ((n = bzIn.read(byteBuffer)) != -1) { baos.write(byteBuffer, 0, n); }
+    
+    return baos.toByteArray();
+}
+
+catch (Exception e) { return null; }
+
+}
+
+// ============================================================================
 /// Цей метод викликається з конструктора для ініціалізації форми.
 /// УВАГА: НЕ змінюйте цей код. Вміст цього методу завжди 
 /// перезапишеться редактором форм
@@ -340,7 +477,7 @@ lbl_colCount.setText(tmp);
         mni_about = new JMenuItem();
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        setTitle("TTool_Desp");
+        setTitle("BS Translation Tool");
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent evt) {
                 onWindowClose(evt);
@@ -420,12 +557,16 @@ lbl_colCount.setText(tmp);
         mn_edit.setText("Правка");
 
         mni_fntDecompile.setText("Розпакувати шрифт");
-        mni_fntDecompile.setActionCommand("info");
-        mni_fntDecompile.setEnabled(false);
+        mni_fntDecompile.setActionCommand("decompileFont");
+        mni_fntDecompile.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                onMenuClick(evt);
+            }
+        });
         mn_edit.add(mni_fntDecompile);
 
         mni_fntCompile.setText("Запакувати шрифт");
-        mni_fntCompile.setActionCommand("info");
+        mni_fntCompile.setActionCommand("compileFont");
         mni_fntCompile.setEnabled(false);
         mn_edit.add(mni_fntCompile);
 
@@ -476,11 +617,18 @@ lbl_colCount.setText(tmp);
     private void onMenuClick(ActionEvent evt) {//GEN-FIRST:event_onMenuClick
 
     switch (evt.getActionCommand()) {
+        
         case "open" -> showOpenDialog();
         case "save" -> showSaveDialog();
         case "find" -> showSearchDialog();
         case "exit" -> showExitDialog();
         case "info" -> showInfoDialog();
+        
+        case "decompileFont" -> showDecompileFontDialog();
+        case "compileFont"   -> showCompileFontDialog();
+        case "decompileRaw"  -> showDecompileRawDialog();
+        case "compileRaw"    -> showCompileRawDialog();
+        
     }   
     }//GEN-LAST:event_onMenuClick
 

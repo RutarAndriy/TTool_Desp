@@ -90,10 +90,17 @@
       <version>${jupiter.junit.version}</version>
       <scope>test</scope>
     </dependency>
+    <!-- LookAndFeel -->
     <dependency>
       <groupId>com.formdev</groupId>
       <artifactId>flatlaf</artifactId>
       <version>3.6</version>
+    </dependency>
+    <!-- Бібліотека для роботи з bzip2 -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>1.28.0</version>
     </dependency>
   </dependencies>
 
