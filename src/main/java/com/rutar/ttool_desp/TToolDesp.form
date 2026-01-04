@@ -16,6 +16,7 @@
                 </Property>
                 <Property name="text" type="java.lang.String" value="&#x412;&#x456;&#x434;&#x43a;&#x440;&#x438;&#x442;&#x438;"/>
                 <Property name="actionCommand" type="java.lang.String" value="open"/>
+                <Property name="enabled" type="boolean" value="false"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="onMenuClick"/>
@@ -28,6 +29,7 @@
                 </Property>
                 <Property name="text" type="java.lang.String" value="&#x417;&#x431;&#x435;&#x440;&#x435;&#x433;&#x442;&#x438;"/>
                 <Property name="actionCommand" type="java.lang.String" value="save"/>
+                <Property name="enabled" type="boolean" value="false"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="onMenuClick"/>
@@ -42,6 +44,7 @@
                 </Property>
                 <Property name="text" type="java.lang.String" value="&#x41f;&#x43e;&#x448;&#x443;&#x43a;"/>
                 <Property name="actionCommand" type="java.lang.String" value="find"/>
+                <Property name="enabled" type="boolean" value="false"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="onMenuClick"/>

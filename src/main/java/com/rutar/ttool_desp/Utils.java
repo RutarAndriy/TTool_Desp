@@ -1,6 +1,9 @@
 package com.rutar.ttool_desp;
 
 // ............................................................................
+
+import java.nio.charset.Charset;
+
 /// Корисні допоміжні методи
 /// @author Rutar_Andriy
 /// 01.01.2026
@@ -64,6 +67,16 @@ public static int from1555to8888argb (short argb1555) {
     
     return (a8 << 24) | (r8 << 16) | (g8 << 8) | b8;
 
+}
+
+// ============================================================================
+/// Отримання коду символу в кодуванні cp1251
+/// @param c символ
+/// @return код символу в кодуванні cp1251
+
+public static int getCharCP1251Code (char c) {
+    
+    return String.valueOf(c).getBytes(Charset.forName("cp1251"))[0] & 0xFF;
 }
 
 // Кінець класу Utils =========================================================

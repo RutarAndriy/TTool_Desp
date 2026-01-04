@@ -19,6 +19,8 @@ import javax.swing.filechooser.*;
 import com.formdev.flatlaf.themes.*;
 import org.apache.commons.compress.compressors.bzip2.*;
 
+import static java.io.File.*;
+import static java.lang.System.*;
 import static javax.swing.JOptionPane.*;
 import static javax.swing.JFileChooser.*;
 import static java.awt.image.BufferedImage.*;
@@ -36,13 +38,9 @@ private File inputFile;                                         // вхідни�
 private final JFileChooser fileOpen;           // відкривання/збереження файлів
 // private final JFileChooser fntCompile;               // компілювання шрифтів
 private final JFileChooser fntDecompile;              // декомпілювання шрифтів
-// private final JFileChooser rawCompile;                 // компілювання даних
-// private final JFileChooser rawDecompile;             // декомпілювання даних
 
 private String appDescription;                                 // опис програми
 private DefaultTableModel tableModel;              // стандартна модель таблиці
-
-private boolean dataWasChanged;                // якщо true - дані були змінені
 
 // ............................................................................
 
@@ -59,7 +57,7 @@ private final FileNameExtensionFilter extFnt =
 
 private SearchDialog searchDialog;         // діалогове вікно пошуку інформації
 
-public static boolean debug = false; // якщо true - увімк. режим налагоджування
+public static boolean debug = true;  // якщо true - увімк. режим налагоджування
 
 // ============================================================================
 /// Конструктор за замовчуванням
@@ -107,27 +105,6 @@ public static void main (String args[]) {
     EventQueue.invokeLater(() -> {
         new TToolDesp().setVisible(true);
     });
-}
-
-// ============================================================================
-/// Відкривання файлів
-
-private void showOpenDialog() {
-
-//int result = fileOpen.showOpenDialog(this);
-//if (result != JFileChooser.APPROVE_OPTION) { return; }
-
-}
-
-// ============================================================================
-/// Збереження файлів
-
-private void showSaveDialog() {
-
-//fileOpen.setSelectedFile(inputFile);
-//int result = fileOpen.showSaveDialog(this);
-//if (result != JFileChooser.APPROVE_OPTION) { return; }
-
 }
 
 // ============================================================================
@@ -191,27 +168,15 @@ private void showSearchDialog() {
 // ============================================================================
 /// Відображення вікна підтвердження виходу
 
-private void showExitDialog() {
-
-// Якщо дані не змінювалися - просто виходимо
-if (!dataWasChanged) { System.exit(0); }
-
-String saveDataQuestion = """
-    Ви бажаєте вийти з програми?
-    Усі незбережені дані буде втрачено
-    """;
-
-int answer = showConfirmDialog(this, saveDataQuestion,
-                              "Підтвердження виходу", YES_NO_OPTION);
-
-if (answer == YES_OPTION) { System.exit(0); }
-
-}
+private void showExitDialog() { System.exit(0); }
 
 // ============================================================================
 /// Вибір шрифту для розпакування
 
 private void showDecompileFontDialog() {
+
+// dialog.fnt - error
+// title.fnt  - error
 
 int result = fntDecompile.showOpenDialog(this);
 if (result != JFileChooser.APPROVE_OPTION) { return; }
@@ -220,8 +185,7 @@ inputFile = fntDecompile.getSelectedFile();
 
 try { allBytes = Files.readAllBytes(inputFile.toPath()); }
 
-catch (IOException e) { System.out.println("Decompile font error");
-                        e.printStackTrace();
+catch (IOException e) { out.println("Decompile font error");
                         return; }
 
 // ............................................................................
@@ -230,114 +194,171 @@ byte[] data;
 buffer = ByteBuffer.wrap(allBytes);
 buffer.order(ByteOrder.LITTLE_ENDIAN);
 
+ByteBuffer fontHeaderBuffer = ByteBuffer.allocate(70);
+fontHeaderBuffer.order(ByteOrder.LITTLE_ENDIAN);
+
+// ............................................................................
+if (debug) { out.println(" --- Font Header --- "); }
+
 // Сигнатура - uint8_t[6] signature
 data = new byte[6];
 buffer.get(data);
-if (debug) { System.out.println("Signature: " + new String(data)); }
+fontHeaderBuffer.put(data);
+if (debug) { out.println("Signature: " + new String(data)); }
 
 // Доп. змінна - uint32_t unk_dword_00
 int aInt = buffer.getInt();
-if (debug) { System.out.println("Type_1?: " + aInt); }
+fontHeaderBuffer.putInt(aInt);
+if (debug) { out.println("Type_1?: " + aInt); }
 
 // Назва шрифту - uint8_t[36] font_name
 data = new byte[36];
 buffer.get(data);
-if (debug) { System.out.println("Font name: " + new String(data)); }
+fontHeaderBuffer.put(data);
+if (debug) { out.println("Font name: " + new String(data)); }
 
 // Тип чогось - uint16_t unk_word_00 // Type of something?
 short aShort = buffer.getShort();
-if (debug) { System.out.println("Type_2?: " + aShort); }
+fontHeaderBuffer.putShort(aShort);
+if (debug) { out.println("Type_2?: " + aShort); }
 
 // Тип чогось - uint16_t unk_word_01
 short a2Short = buffer.getShort();
-if (debug) { System.out.println("Type_3?: " + a2Short); }
+fontHeaderBuffer.putShort(a2Short);
+if (debug) { out.println("Type_3?: " + a2Short); }
 
 // Висота шрифта - uint32_t unk_dword_02 // Height?
 int fontHeight = buffer.getInt();
-if (debug) { System.out.println("FontHeight: " + fontHeight); }
+fontHeaderBuffer.putInt(fontHeight);
+if (debug) { out.println("FontHeight: " + fontHeight); }
 
 // Ширина симв. квадрату - uint32_t unk_dword_03 // Letter rectangle width(?)
 int leterRectangleWidth = buffer.getInt();
-if (debug) { System.out.println("RectangleWidth: " + leterRectangleWidth); }
+fontHeaderBuffer.putInt(leterRectangleWidth);
+if (debug) { out.println("RectangleWidth: " + leterRectangleWidth); }
 
 // Макс. ширина символу - uint32_t unk_dword_04 // Maximum letter width(?)
 int maxLetterWidth = buffer.getInt();
-if (debug) { System.out.println("MaxLetterWidth: " + maxLetterWidth); }
+fontHeaderBuffer.putInt(maxLetterWidth);
+if (debug) { out.println("MaxLetterWidth: " + maxLetterWidth); }
 
 // Кількість символів у шрифті - uint32_t entry_count
 int entryCount = buffer.getInt();
-if (debug) { System.out.println("EntryCount: " + entryCount); }
+fontHeaderBuffer.putInt(entryCount);
+if (debug) { out.println("EntryCount: " + entryCount); }
 
 // Перевірка заданої умови
 if (aInt >= 512) {
     // Невідома змінна - uint32_t unk_dword_05 // x_coord + unk_dword_05?
     int a2Int = buffer.getInt();
-    if (debug) { System.out.println("Type_4?: " + a2Int); }
+    fontHeaderBuffer.putInt(a2Int);
+    if (debug) { out.println("Type_4?: " + a2Int); }
 }
 
 // ............................................................................
-if (debug) { System.out.println(" --- Chars --- "); }
+if (debug) { out.println(" --- Chars --- "); }
+
+ArrayList<CharEntry> charEntries = new ArrayList<>();
 
 for (int z = 0; z < entryCount; z++) {
     
-    char aChar =  buffer.getChar(); // uint16_t char_value
-    int yCoord =  buffer.getInt();  // uint32_t y_coord
-    int lWidth =  buffer.getInt();  // uint32_t letter_width
-    int unkInt1 = buffer.getInt();  // uint32_t unk_dword_00
-    int unkInt2 = buffer.getInt();  // uint32_t unk_dword_01
+    CharEntry charEntry = new CharEntry(buffer.getChar(),
+                                        buffer.getInt(), buffer.getInt(),
+                                        buffer.getInt(), buffer.getInt());
 
-    // The "real" witdh is computed: letter_width + unk_dword_00 + unk_dword_01
-
-    if (debug) { System.out.println("\"" + aChar + "\" - "
-                                         + yCoord + ", " + lWidth + ", "
-                                         + unkInt1 + ", " + unkInt2); }
+    charEntries.add(charEntry);
+    
+    if (debug) { out.println("\"" + charEntry.getChar()       + "\" - "
+                                  + charEntry.getCharX()      + ", "
+                                  + charEntry.getCharW()      + ", "
+                                  + charEntry.getUnknownOne() + ", "
+                                  + charEntry.getUnknownTwo()); }
 }
 
 // ............................................................................
-if (debug) { System.out.println(" --- Images --- "); }
+if (debug) { out.println(" --- Images --- "); }
+
+// Створення вихідної папки
+File outDir = new File(inputFile.getParent() + separator +
+                       inputFile.getName().split("\\.")[0]);
+outDir.mkdir();
+
+// Отримання сирих батів заголовку шрифта
+fontHeaderBuffer.flip();
+byte[] fontHeader = new byte[fontHeaderBuffer.remaining()];
+fontHeaderBuffer.get(fontHeader);
+
+File headerFile = new File(outDir.getPath() + separator + "fontHeader.bin");
+
+// Запис заголовку шрифта у файл
+try (FileOutputStream fis = new FileOutputStream(headerFile))
+    { fis.write(fontHeader); }
+catch (Exception _) {}
+
+// ............................................................................
 
 for (int z = 1; z <= 2; z++) {
 
-    int color;
-    short width  = buffer.getShort(); // uint16_t width
-    short height = buffer.getShort(); // uint16_t height
-    int compType = buffer.getInt();   // uint32_t compression_type
-    int compSize = buffer.getInt();   // uint32_t size_compressed
+int color;
+short width  = buffer.getShort(); // uint16_t width
+short height = buffer.getShort(); // uint16_t height
+int compType = buffer.getInt();   // uint32_t compression_type
+int compSize = buffer.getInt();   // uint32_t size_compressed
 
-    File imgFile = new File(homeDir.getPath() + "/im_" + z + ".bmp");
+data = new byte[compSize];
+buffer.get(data); // uint8_t[size_compressed] compressed_data
 
-    data = new byte[compSize];
-    buffer.get(data); // uint8_t[size_compressed] compressed_data
+data = decompress(data); // розпаковуємо стиснені дані
 
-    data = decompress(data);
+if (debug) { out.println("Image_" + z + ", " + width + "x" + height
+                       + ", comp = " + compType
+                       + ", size = " + compSize); }
 
-    if (debug) { System.out.println("Image_" + z + ", " + width + "x" + height
-                                  + ", comp = " + compType
-                                  + ", size = " + compSize); }
+BufferedImage image = new BufferedImage(width, height, TYPE_3BYTE_BGR);
 
-    BufferedImage image = new BufferedImage(width, height, TYPE_3BYTE_BGR);
+// Зчитуємо розпаковані дані та відтворюємо зображення зі шрифтом
+ByteBuffer imageBuffer = ByteBuffer.wrap(data);
+imageBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
-    ByteBuffer imageBuffer = ByteBuffer.wrap(data);
-    imageBuffer.order(ByteOrder.LITTLE_ENDIAN);
-
-    for (int r = 0; r < height; r++) {
-    for (int c = 0; c < width; c++) {
-
-        color = Utils.from565to888rgb(imageBuffer.getShort());
-        image.setRGB(c, r, color);
-
-    }
-    }
-
-try { ImageIO.write(image, "bmp", imgFile);
-      if (debug) { System.out.println("File im_" + z + ".bmp was written"); } }
-
-catch (IOException e)
-    { if (debug) { System.err.println("File im_" + z + ".bmp error"); } }
-
+for (int r = 0; r < height; r++) {
+for (int c = 0; c < width; c++) {
+    color = Utils.from565to888rgb(imageBuffer.getShort());
+    image.setRGB(c, r, color);
+}
 }
 
-if (debug) { System.out.println(" --- /// --- "); }
+// Проходимося по всіх символах та записуємо їх у файли
+for (int q = 0; q < charEntries.size(); q++) {
+    
+    int imW = leterRectangleWidth + 1;
+    int imH = fontHeight;
+    int x = q * imW;
+
+    // Обробка можливого виходу за фактичні розміри зображення
+    if (x + imW > image.getWidth()) { imW = image.getWidth() - x; }
+
+    String num = String.format("%03d", q + 1);
+    BufferedImage subimage = image.getSubimage(x, 0, imW, imH);
+    CharEntry entry = charEntries.get(q);
+    int code = Utils.getCharCP1251Code(entry.getChar());
+    
+    String name = "x" + z                      // порядковий номер зображення
+                + "_" + num                    // порядковий номер символу
+                + "_" + code                   // код символу
+                + "_" + entry.getCharX()       // горизонтальний зсув символу
+                + "_" + entry.getCharW()       // ширина символу
+                + "_" + entry.getUnknownOne()  // невід. параметр 1
+                + "_" + entry.getUnknownTwo(); // невід. параметр 2
+    
+    File entryFile = new File(outDir.getPath() + separator + name + ".bmp");
+
+    try { ImageIO.write(subimage, "bmp", entryFile); }
+    catch (IOException e) { err.println(e.getMessage());
+                            return; }
+}
+}
+
+if (debug) { System.out.println(" --- ##### --- "); }
 
 }
 
@@ -345,87 +366,6 @@ if (debug) { System.out.println(" --- /// --- "); }
 /// Вибір розпакованого шрифту для пакування
 
 private void showCompileFontDialog() {}
-
-// ============================================================================
-/// Вибір даних для розпакування
-
-private void showDecompileRawDialog() {}
-
-// ============================================================================
-/// Вибір розпакованих даних для пакування
-
-private void showCompileRawDialog() {}
-
-// ============================================================================
-/// Попередня ініціалізація нової таблиці
-
-private void prepareNewTable() {
-
-dataWasChanged = false;
-inputFile = fileOpen.getSelectedFile();
-sp_table.getVerticalScrollBar().setValue(0);
-
-tableModel = new DefaultTableModel() {
-    @Override
-    public boolean isCellEditable (int row, int column) { return column >= 2; }
-};
-
-tbl_main.setModel(tableModel);
-
-tableModel.addColumn("№");
-tableModel.addColumn("Ключ");
-tableModel.addColumn("Значення");
-
-}
-
-// ============================================================================
-/// Завершальна ініціалізація нової таблиці
-
-private void finalizeNewTable() {
-
-TableColumn tColumn;
-
-CellRender cellRenderer = new CellRender();
-cellRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-
-tColumn = tbl_main.getColumnModel().getColumn(0);
-tColumn.setCellRenderer(cellRenderer);
-tColumn.setPreferredWidth(45);
-tColumn.setResizable(false);
-
-for (int z = 1; z < tbl_main.getColumnCount(); z++) {
-    tbl_main.getColumnModel().getColumn(z).setCellRenderer(new CellRender());
-    tbl_main.getColumnModel().getColumn(z).setPreferredWidth(175);    
-}
-
-// ............................................................................
-
-setTableInfo();
-
-tableModel.addTableModelListener((TableModelEvent e) -> {
-    dataWasChanged = true;
-});
-
-}
-
-// ============================================================================
-/// Оновлення інформації про таблицю
-
-private void setTableInfo() {
-
-String tmp;
-    
-tmp = lbl_rowCount.getText();
-tmp = tmp.substring(0, tmp.indexOf(":") + 1) + " "
-                  + tableModel.getRowCount();
-lbl_rowCount.setText(tmp);
-
-tmp = lbl_colCount.getText();
-tmp = tmp.substring(0, tmp.indexOf(":") + 1) + " "
-                  + tableModel.getColumnCount();
-lbl_colCount.setText(tmp);
-    
-}
 
 // ============================================================================
 /// Розпакування даних, запакованих з допомогою алгоритму bzip2
@@ -513,6 +453,7 @@ catch (Exception e) { return null; }
         mni_open.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
         mni_open.setText("Відкрити");
         mni_open.setActionCommand("open");
+        mni_open.setEnabled(false);
         mni_open.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 onMenuClick(evt);
@@ -523,6 +464,7 @@ catch (Exception e) { return null; }
         mni_save.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
         mni_save.setText("Зберегти");
         mni_save.setActionCommand("save");
+        mni_save.setEnabled(false);
         mni_save.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 onMenuClick(evt);
@@ -534,6 +476,7 @@ catch (Exception e) { return null; }
         mni_find.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK));
         mni_find.setText("Пошук");
         mni_find.setActionCommand("find");
+        mni_find.setEnabled(false);
         mni_find.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 onMenuClick(evt);
@@ -618,16 +561,12 @@ catch (Exception e) { return null; }
 
     switch (evt.getActionCommand()) {
         
-        case "open" -> showOpenDialog();
-        case "save" -> showSaveDialog();
         case "find" -> showSearchDialog();
         case "exit" -> showExitDialog();
         case "info" -> showInfoDialog();
         
         case "decompileFont" -> showDecompileFontDialog();
         case "compileFont"   -> showCompileFontDialog();
-        case "decompileRaw"  -> showDecompileRawDialog();
-        case "compileRaw"    -> showCompileRawDialog();
         
     }   
     }//GEN-LAST:event_onMenuClick
