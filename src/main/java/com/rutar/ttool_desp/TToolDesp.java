@@ -18,12 +18,14 @@ import com.formdev.flatlaf.*;
 import javax.swing.filechooser.*;
 import com.formdev.flatlaf.themes.*;
 import org.apache.commons.compress.compressors.bzip2.*;
+//import org.apache.commons.compress.compressors.
 
 import static java.io.File.*;
 import static java.lang.System.*;
 import static javax.swing.JOptionPane.*;
 import static javax.swing.JFileChooser.*;
 import static java.awt.image.BufferedImage.*;
+import org.apache.commons.compress.compressors.deflate.DeflateCompressorInputStream;
 
 // ............................................................................
 /// Головний клас програми
@@ -175,9 +177,6 @@ private void showExitDialog() { System.exit(0); }
 
 private void showDecompileFontDialog() {
 
-// dialog.fnt - error
-// title.fnt  - error
-
 int result = fntDecompile.showOpenDialog(this);
 if (result != JFileChooser.APPROVE_OPTION) { return; }
 
@@ -185,7 +184,7 @@ inputFile = fntDecompile.getSelectedFile();
 
 try { allBytes = Files.readAllBytes(inputFile.toPath()); }
 
-catch (IOException e) { out.println("Decompile font error");
+catch (IOException e) { showMessageDialog(this, "Відбулася критична помилка!");
                         return; }
 
 // ............................................................................
@@ -200,56 +199,56 @@ fontHeaderBuffer.order(ByteOrder.LITTLE_ENDIAN);
 // ............................................................................
 if (debug) { out.println(" --- Font Header --- "); }
 
-// Сигнатура - uint8_t[6] signature
+// Сигнатура
 data = new byte[6];
 buffer.get(data);
 fontHeaderBuffer.put(data);
 if (debug) { out.println("Signature: " + new String(data)); }
 
-// Доп. змінна - uint32_t unk_dword_00
+// Доп. змінна
 int aInt = buffer.getInt();
 fontHeaderBuffer.putInt(aInt);
 if (debug) { out.println("Type_1?: " + aInt); }
 
-// Назва шрифту - uint8_t[36] font_name
+// Назва шрифту
 data = new byte[36];
 buffer.get(data);
 fontHeaderBuffer.put(data);
 if (debug) { out.println("Font name: " + new String(data)); }
 
-// Тип чогось - uint16_t unk_word_00 // Type of something?
+// Тип чогось
 short aShort = buffer.getShort();
 fontHeaderBuffer.putShort(aShort);
 if (debug) { out.println("Type_2?: " + aShort); }
 
-// Тип чогось - uint16_t unk_word_01
+// Тип чогось
 short a2Short = buffer.getShort();
 fontHeaderBuffer.putShort(a2Short);
 if (debug) { out.println("Type_3?: " + a2Short); }
 
-// Висота шрифта - uint32_t unk_dword_02 // Height?
+// Висота шрифта
 int fontHeight = buffer.getInt();
 fontHeaderBuffer.putInt(fontHeight);
 if (debug) { out.println("FontHeight: " + fontHeight); }
 
-// Ширина симв. квадрату - uint32_t unk_dword_03 // Letter rectangle width(?)
+// Ширина симв. квадрату
 int leterRectangleWidth = buffer.getInt();
 fontHeaderBuffer.putInt(leterRectangleWidth);
 if (debug) { out.println("RectangleWidth: " + leterRectangleWidth); }
 
-// Макс. ширина символу - uint32_t unk_dword_04 // Maximum letter width(?)
+// Макс. ширина символу
 int maxLetterWidth = buffer.getInt();
 fontHeaderBuffer.putInt(maxLetterWidth);
 if (debug) { out.println("MaxLetterWidth: " + maxLetterWidth); }
 
-// Кількість символів у шрифті - uint32_t entry_count
+// Кількість символів у шрифті
 int entryCount = buffer.getInt();
 fontHeaderBuffer.putInt(entryCount);
 if (debug) { out.println("EntryCount: " + entryCount); }
 
 // Перевірка заданої умови
 if (aInt >= 512) {
-    // Невідома змінна - uint32_t unk_dword_05 // x_coord + unk_dword_05?
+    // Невідома змінна
     int a2Int = buffer.getInt();
     fontHeaderBuffer.putInt(a2Int);
     if (debug) { out.println("Type_4?: " + a2Int); }
@@ -262,17 +261,19 @@ ArrayList<CharEntry> charEntries = new ArrayList<>();
 
 for (int z = 0; z < entryCount; z++) {
     
-    CharEntry charEntry = new CharEntry(buffer.getChar(),
-                                        buffer.getInt(), buffer.getInt(),
-                                        buffer.getInt(), buffer.getInt());
-
-    charEntries.add(charEntry);
+    String num = String.format("%03d", z + 1);
+    CharEntry entry = new CharEntry(buffer.getChar(),
+                                    buffer.getInt(), buffer.getInt(),
+                                    buffer.getInt(), buffer.getInt());
     
-    if (debug) { out.println("\"" + charEntry.getChar()       + "\" - "
-                                  + charEntry.getCharX()      + ", "
-                                  + charEntry.getCharW()      + ", "
-                                  + charEntry.getUnknownOne() + ", "
-                                  + charEntry.getUnknownTwo()); }
+    charEntries.add(entry);
+    
+    if (debug) { out.println(num                   + " - \""
+                           + entry.getChar()       + "\" - "
+                           + entry.getCharX()      + ", "
+                           + entry.getCharW()      + ", "
+                           + entry.getUnknownOne() + ", "
+                           + entry.getUnknownTwo()); }
 }
 
 // ............................................................................
@@ -308,7 +309,8 @@ int compSize = buffer.getInt();   // uint32_t size_compressed
 data = new byte[compSize];
 buffer.get(data); // uint8_t[size_compressed] compressed_data
 
-data = decompress(data); // розпаковуємо стиснені дані
+// розпаковуємо стиснені дані
+data = compType == 1 ? zlibDecompress(data) : bzip2Decompress(data);
 
 if (debug) { out.println("Image_" + z + ", " + width + "x" + height
                        + ", comp = " + compType
@@ -330,17 +332,20 @@ for (int c = 0; c < width; c++) {
 // Проходимося по всіх символах та записуємо їх у файли
 for (int q = 0; q < charEntries.size(); q++) {
     
+    CharEntry entry = charEntries.get(q);
+    String num = String.format("%03d", q + 1);
+    
     int imW = leterRectangleWidth + 1;
     int imH = fontHeight;
-    int x = q * imW;
+    int x = entry.getCharX();
 
     // Обробка можливого виходу за фактичні розміри зображення
     if (x + imW > image.getWidth()) { imW = image.getWidth() - x; }
 
-    String num = String.format("%03d", q + 1);
+    // Отримання частинки зображення із конкретним символом
     BufferedImage subimage = image.getSubimage(x, 0, imW, imH);
-    CharEntry entry = charEntries.get(q);
-    int code = Utils.getCharCP1251Code(entry.getChar());
+    
+    String code = Utils.getCharAsString(entry.getChar());
     
     String name = "x" + z                      // порядковий номер зображення
                 + "_" + num                    // порядковий номер символу
@@ -358,7 +363,9 @@ for (int q = 0; q < charEntries.size(); q++) {
 }
 }
 
-if (debug) { System.out.println(" --- ##### --- "); }
+if (debug) { System.out.println(" --- xxx --- "); }
+
+showMessageDialog(this, "Шрифт успішно розібрано!");
 
 }
 
@@ -368,23 +375,48 @@ if (debug) { System.out.println(" --- ##### --- "); }
 private void showCompileFontDialog() {}
 
 // ============================================================================
-/// Розпакування даних, запакованих з допомогою алгоритму bzip2
+/// Розпакування даних, запакованих з допомогою алгоритму zlib
 
-private byte[] decompress (byte[] compressed) {
+private byte[] zlibDecompress (byte[] compressed) {
 
 try (ByteArrayInputStream bais = new ByteArrayInputStream(compressed);
-     BZip2CompressorInputStream bzIn = new BZip2CompressorInputStream(bais);
+     DeflateCompressorInputStream dis = new DeflateCompressorInputStream(bais);
      ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
     int n;
     byte[] byteBuffer = new byte[8192];
     
-    while ((n = bzIn.read(byteBuffer)) != -1) { baos.write(byteBuffer, 0, n); }
+    while ((n = dis.read(byteBuffer)) != -1) { baos.write(byteBuffer, 0, n); }
     
     return baos.toByteArray();
 }
 
-catch (Exception e) { return null; }
+catch (Exception e)
+    { err.println("zlib decompress error");
+      return null; }
+
+}
+
+// ============================================================================
+/// Розпакування даних, запакованих з допомогою алгоритму bzip2
+
+private byte[] bzip2Decompress (byte[] compressed) {
+
+try (ByteArrayInputStream bais = new ByteArrayInputStream(compressed);
+     BZip2CompressorInputStream bzis = new BZip2CompressorInputStream(bais);
+     ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+    int n;
+    byte[] byteBuffer = new byte[8192];
+    
+    while ((n = bzis.read(byteBuffer)) != -1) { baos.write(byteBuffer, 0, n); }
+    
+    return baos.toByteArray();
+}
+
+catch (Exception e)
+    { err.println("bzip2 decompress error");
+      return null; }
 
 }
 
@@ -417,7 +449,7 @@ catch (Exception e) { return null; }
         mni_about = new JMenuItem();
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        setTitle("BS Translation Tool");
+        setTitle("TTool_Desp");
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent evt) {
                 onWindowClose(evt);

@@ -79,6 +79,31 @@ public static int getCharCP1251Code (char c) {
     return String.valueOf(c).getBytes(Charset.forName("cp1251"))[0] & 0xFF;
 }
 
+// ============================================================================
+/// Перетворення символу на строку
+/// @param c символ для перетворення
+/// @return строкове представлення символу
+
+public static String getCharAsString (char c) {
+    
+    String result = String.valueOf(c);
+
+    // Обробка усіх символів, які не можна використовувати в іменах 
+    // файлів на Windows (\ / : * ? " < > |), а також символу "_"
+    if (result.equals("\\") || result.equals("/")  ||
+        result.equals(":")  || result.equals("*")  ||
+        result.equals("?")  || result.equals("\"") ||
+        result.equals("<")  || result.equals(">")  ||
+        result.equals("|")  || result.equals("_")) {
+        
+        result = Integer.toString(Utils.getCharCP1251Code(c));
+    
+    }
+    
+    return result;
+
+}
+
 // Кінець класу Utils =========================================================
 
 }
