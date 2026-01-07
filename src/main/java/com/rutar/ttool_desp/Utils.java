@@ -74,17 +74,28 @@ public static int from1555to8888argb (short argb1555) {
 /// @param c символ
 /// @return код символу в кодуванні cp1251
 
-public static int getCharCP1251Code (char c) {
+public static int fromCP1251CharToCode (char c) {
     
     return String.valueOf(c).getBytes(Charset.forName("cp1251"))[0] & 0xFF;
 }
 
 // ============================================================================
-/// Перетворення символу на строку
-/// @param c символ для перетворення
-/// @return строкове представлення символу
+/// Отримання символу за його кодом в кодуванні cp1251
+/// @param code код символу в кодуванні cp1251
+/// @return відповідний символ
 
-public static String getCharAsString (char c) {
+public static char fromCodeToCP1251Char (int code) {
+    
+    byte bCode = (byte) code;
+    return new String(new byte[]{bCode}, Charset.forName("cp1251")).charAt(0);
+}
+
+// ============================================================================
+/// Перетворення символу на рядок
+/// @param c символ для перетворення
+/// @return рядкове представлення символу
+
+public static String fromCharToString (char c) {
     
     String result = String.valueOf(c);
 
@@ -96,12 +107,23 @@ public static String getCharAsString (char c) {
         result.equals("<")  || result.equals(">")  ||
         result.equals("|")  || result.equals("_")) {
         
-        result = Integer.toString(Utils.getCharCP1251Code(c));
+        result = Integer.toString(Utils.fromCP1251CharToCode(c));
     
     }
     
     return result;
 
+}
+
+// ============================================================================
+/// Перетворення рядка на символ
+/// @param s рядок для перетворення
+/// @return символьне представлення рядка
+
+public static char fromStringToChar (String s) {
+    
+    if (s.length() == 1) { return s.charAt(0); }
+    else { return fromCodeToCP1251Char(Integer.parseInt(s)); }  
 }
 
 // Кінець класу Utils =========================================================

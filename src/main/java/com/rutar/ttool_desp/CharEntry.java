@@ -56,6 +56,18 @@ public void setUnknownOne (int unknownOne) { this.unknownOne = unknownOne; }
 public int getUnknownTwo() { return unknownTwo; }
 public void setUnknownTwo (int unknownTwo) { this.unknownTwo = unknownTwo; }
 
+// ............................................................................
+
+@Override
+public String toString() {
+    
+       return "\"" + getChar()       + "\" - "
+                   + getCharX()      + ", "
+                   + getCharW()      + ", "
+                   + getUnknownOne() + ", "
+                   + getUnknownTwo();
+}
+
 // Кінець класу CharEntry =====================================================
 
 }

@@ -37,8 +37,7 @@ public class TToolDesp extends JFrame {
 private File inputFile;                                         // вхідний файл
 // private File outputFile;                                    // вихідний файл
 
-private final JFileChooser fileOpen;           // відкривання/збереження файлів
-// private final JFileChooser fntCompile;               // компілювання шрифтів
+private final JFileChooser fntCompile;                  // компілювання шрифтів
 private final JFileChooser fntDecompile;              // декомпілювання шрифтів
 
 private String appDescription;                                 // опис програми
@@ -68,18 +67,19 @@ public TToolDesp() {
 
 initComponents();
 
-fileOpen = new JFileChooser();
-fileOpen.setFileSelectionMode(FILES_AND_DIRECTORIES);
-//fileOpen.removeChoosableFileFilter(fileOpen.getChoosableFileFilters()[0]);
-fileOpen.addChoosableFileFilter(extFnt);
-fileOpen.setCurrentDirectory(homeDir);
-//fileOpen.setSelectedFile(new File("..."));
-
 fntDecompile = new JFileChooser();
 fntDecompile.setFileSelectionMode(FILES_ONLY);
-fileOpen.removeChoosableFileFilter(fileOpen.getChoosableFileFilters()[0]);
+fntDecompile.removeChoosableFileFilter(fntDecompile
+            .getChoosableFileFilters()[0]);
 fntDecompile.addChoosableFileFilter(extFnt);
 fntDecompile.setCurrentDirectory(homeDir);
+
+fntCompile = new JFileChooser();
+fntCompile.setFileSelectionMode(DIRECTORIES_ONLY);
+fntCompile.removeChoosableFileFilter(fntCompile
+          .getChoosableFileFilters()[0]);
+fntCompile.addChoosableFileFilter(extFnt);
+fntCompile.setCurrentDirectory(homeDir);
 
 }
 
@@ -268,12 +268,7 @@ for (int z = 0; z < entryCount; z++) {
     
     charEntries.add(entry);
     
-    if (debug) { out.println(num                   + " - \""
-                           + entry.getChar()       + "\" - "
-                           + entry.getCharX()      + ", "
-                           + entry.getCharW()      + ", "
-                           + entry.getUnknownOne() + ", "
-                           + entry.getUnknownTwo()); }
+    if (debug) { out.println(num + " - " + entry.toString()); }
 }
 
 // ............................................................................
@@ -345,7 +340,7 @@ for (int q = 0; q < charEntries.size(); q++) {
     // Отримання частинки зображення із конкретним символом
     BufferedImage subimage = image.getSubimage(x, 0, imW, imH);
     
-    String code = Utils.getCharAsString(entry.getChar());
+    String code = Utils.fromCharToString(entry.getChar());
     
     String name = "x" + z                      // порядковий номер зображення
                 + "_" + num                    // порядковий номер символу
@@ -372,7 +367,62 @@ showMessageDialog(this, "Шрифт успішно розібрано!");
 // ============================================================================
 /// Вибір розпакованого шрифту для пакування
 
-private void showCompileFontDialog() {}
+private void showCompileFontDialog() {
+
+int result = fntCompile.showOpenDialog(this);
+if (result != JFileChooser.APPROVE_OPTION) { return; }
+
+inputFile = fntCompile.getSelectedFile();
+File[] allFiles = inputFile.listFiles();
+
+File file;
+String fileName;
+int maxImageWidth = 0;
+int entryCount = (allFiles.length - 1) / 2;
+ArrayList<BufferedImage> images = new ArrayList<>();
+ArrayList<CharEntry> charEntries = new ArrayList<>();
+
+// ............................................................................
+// Зчитування усіх зображень у папці
+
+for (int z = 1; z <= 2; z++) {
+
+for (int q = 0; q < entryCount; q++) {
+
+String num = String.format("%03d", q + 1);
+
+for (int f = 0; f < allFiles.length; f++) {
+    
+    file = allFiles[f];
+    fileName = file.getName();
+    
+    if (fileName.startsWith("x" + z + "_" + num)) { 
+            
+        try { String[] nameParts = fileName.split("_");
+              char charC     = Utils.fromStringToChar(nameParts[2]);
+              int charX      = Integer.parseInt(nameParts[3]);
+              int charW      = Integer.parseInt(nameParts[4]);
+              int unknownOne = Integer.parseInt(nameParts[5]);
+              int unknownTwo = Integer.parseInt(nameParts[6].split("\\.")[0]);
+              charEntries.add(new CharEntry(charC, charX, charW,
+                                            unknownOne, unknownTwo));
+          
+              if (charX + charW > maxImageWidth) { maxImageWidth = charX +
+                                                                   charW; }
+          
+              images.add(ImageIO.read(file));
+              f = allFiles.length; }
+        
+        catch (IOException | NumberFormatException e)
+            { showMessageDialog(this, "Відбулася критична помилка\n"
+                                     + e.getMessage(), "Помилка", 0);
+              return; } } } } }
+
+// ............................................................................
+
+showMessageDialog(this, "Шрифт успішно зібрано!");
+
+}
 
 // ============================================================================
 /// Розпакування даних, запакованих з допомогою алгоритму zlib
@@ -542,7 +592,11 @@ catch (Exception e)
 
         mni_fntCompile.setText("Запакувати шрифт");
         mni_fntCompile.setActionCommand("compileFont");
-        mni_fntCompile.setEnabled(false);
+        mni_fntCompile.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                onMenuClick(evt);
+            }
+        });
         mn_edit.add(mni_fntCompile);
 
         mnb_main.add(mn_edit);
