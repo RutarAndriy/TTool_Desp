@@ -1,5 +1,7 @@
 package com.rutar.ttool_desp;
 
+import java.nio.*;
+
 // ............................................................................
 /// Представлення одиночного символу із *.fnt файлу
 /// @author Rutar_Andriy
@@ -7,14 +9,14 @@ package com.rutar.ttool_desp;
 
 public class CharEntry {
 
-private char charC;  // код символу
-private int charX;      // горизонтальний зсув символу
-private int charW;      // ширина символу
-private int unknownOne; // невідомий параметр 1
-private int unknownTwo; // невідомий параметр 2
+private char charC;      // код символу
+private int  charX;      // горизонтальний зсув символу
+private int  charW;      // ширина символу
+private int  unknownOne; // невідомий параметр 1
+private int  unknownTwo; // невідомий параметр 2
 
 // ============================================================================
-/// Конструктор за замовчування
+/// Конструктор за замовчуванням
 /// @param charC символ
 /// @param charX горизонтальний зсув символу
 /// @param charW ширина символу
@@ -36,27 +38,27 @@ public CharEntry (char charC, int charX, int charW,
 public char getChar() { return charC; }
 public void setChar (char charCode) { this.charC = charCode; }
 
-// ............................................................................
+// ============================================================================
 
 public int getCharX() { return charX; }
 public void setCharX (int charX) { this.charX = charX; }
 
-// ............................................................................
+// ============================================================================
 
 public int getCharW() { return charW; }
 public void setCharW (int charW) { this.charW = charW; }
 
-// ............................................................................
+// ============================================================================
 
 public int getUnknownOne() { return unknownOne; }
 public void setUnknownOne (int unknownOne) { this.unknownOne = unknownOne; }
 
-// ............................................................................
+// ============================================================================
 
 public int getUnknownTwo() { return unknownTwo; }
 public void setUnknownTwo (int unknownTwo) { this.unknownTwo = unknownTwo; }
 
-// ............................................................................
+// ============================================================================
 
 @Override
 public String toString() {
@@ -66,6 +68,22 @@ public String toString() {
                    + getCharW()      + ", "
                    + getUnknownOne() + ", "
                    + getUnknownTwo();
+}
+
+// ============================================================================
+
+public byte[] toBytes() {
+    
+    ByteBuffer buffer = ByteBuffer.allocate(18);
+    buffer.order(ByteOrder.LITTLE_ENDIAN);
+    
+    buffer.putChar(charC);
+    buffer.putInt(charX);
+    buffer.putInt(charW);
+    buffer.putInt(unknownOne);
+    buffer.putInt(unknownTwo);
+    
+    return buffer.array();
 }
 
 // Кінець класу CharEntry =====================================================

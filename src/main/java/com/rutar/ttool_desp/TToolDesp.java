@@ -8,8 +8,6 @@ import java.util.*;
 import javax.swing.*;
 import java.util.jar.*;
 import java.nio.file.*;
-import javax.imageio.*;
-import java.awt.image.*;
 import java.awt.event.*;
 import java.nio.charset.*;
 import javax.swing.event.*;
@@ -17,15 +15,10 @@ import javax.swing.table.*;
 import com.formdev.flatlaf.*;
 import javax.swing.filechooser.*;
 import com.formdev.flatlaf.themes.*;
-import org.apache.commons.compress.compressors.bzip2.*;
-//import org.apache.commons.compress.compressors.
 
 import static java.io.File.*;
-import static java.lang.System.*;
 import static javax.swing.JOptionPane.*;
 import static javax.swing.JFileChooser.*;
-import static java.awt.image.BufferedImage.*;
-import org.apache.commons.compress.compressors.deflate.DeflateCompressorInputStream;
 
 // ............................................................................
 /// Головний клас програми
@@ -35,13 +28,13 @@ import org.apache.commons.compress.compressors.deflate.DeflateCompressorInputStr
 public class TToolDesp extends JFrame {
 
 private File inputFile;                                         // вхідний файл
-// private File outputFile;                                    // вихідний файл
+private File outputFile;                                       // вихідний файл
 
 private final JFileChooser fntCompile;                  // компілювання шрифтів
 private final JFileChooser fntDecompile;              // декомпілювання шрифтів
+private final FontProcessor fontProcessor;                  // обробник шрифтів
 
 private String appDescription;                                 // опис програми
-private DefaultTableModel tableModel;              // стандартна модель таблиці
 
 // ............................................................................
 
@@ -58,7 +51,7 @@ private final FileNameExtensionFilter extFnt =
 
 private SearchDialog searchDialog;         // діалогове вікно пошуку інформації
 
-public static boolean debug = true;  // якщо true - увімк. режим налагоджування
+public static boolean debug = false; // якщо true - увімк. режим налагоджування
 
 // ============================================================================
 /// Конструктор за замовчуванням
@@ -66,6 +59,7 @@ public static boolean debug = true;  // якщо true - увімк. режим �
 public TToolDesp() {
 
 initComponents();
+fontProcessor = new FontProcessor(this);
 
 fntDecompile = new JFileChooser();
 fntDecompile.setFileSelectionMode(FILES_ONLY);
@@ -182,184 +176,19 @@ if (result != JFileChooser.APPROVE_OPTION) { return; }
 
 inputFile = fntDecompile.getSelectedFile();
 
+// Читання всіх байтів шрифту
 try { allBytes = Files.readAllBytes(inputFile.toPath()); }
-
-catch (IOException e) { showMessageDialog(this, "Відбулася критична помилка!");
-                        return; }
-
-// ............................................................................
-
-byte[] data;
-buffer = ByteBuffer.wrap(allBytes);
-buffer.order(ByteOrder.LITTLE_ENDIAN);
-
-ByteBuffer fontHeaderBuffer = ByteBuffer.allocate(70);
-fontHeaderBuffer.order(ByteOrder.LITTLE_ENDIAN);
-
-// ............................................................................
-if (debug) { out.println(" --- Font Header --- "); }
-
-// Сигнатура
-data = new byte[6];
-buffer.get(data);
-fontHeaderBuffer.put(data);
-if (debug) { out.println("Signature: " + new String(data)); }
-
-// Доп. змінна
-int aInt = buffer.getInt();
-fontHeaderBuffer.putInt(aInt);
-if (debug) { out.println("Type_1?: " + aInt); }
-
-// Назва шрифту
-data = new byte[36];
-buffer.get(data);
-fontHeaderBuffer.put(data);
-if (debug) { out.println("Font name: " + new String(data)); }
-
-// Тип чогось
-short aShort = buffer.getShort();
-fontHeaderBuffer.putShort(aShort);
-if (debug) { out.println("Type_2?: " + aShort); }
-
-// Тип чогось
-short a2Short = buffer.getShort();
-fontHeaderBuffer.putShort(a2Short);
-if (debug) { out.println("Type_3?: " + a2Short); }
-
-// Висота шрифта
-int fontHeight = buffer.getInt();
-fontHeaderBuffer.putInt(fontHeight);
-if (debug) { out.println("FontHeight: " + fontHeight); }
-
-// Ширина симв. квадрату
-int leterRectangleWidth = buffer.getInt();
-fontHeaderBuffer.putInt(leterRectangleWidth);
-if (debug) { out.println("RectangleWidth: " + leterRectangleWidth); }
-
-// Макс. ширина символу
-int maxLetterWidth = buffer.getInt();
-fontHeaderBuffer.putInt(maxLetterWidth);
-if (debug) { out.println("MaxLetterWidth: " + maxLetterWidth); }
-
-// Кількість символів у шрифті
-int entryCount = buffer.getInt();
-fontHeaderBuffer.putInt(entryCount);
-if (debug) { out.println("EntryCount: " + entryCount); }
-
-// Перевірка заданої умови
-if (aInt >= 512) {
-    // Невідома змінна
-    int a2Int = buffer.getInt();
-    fontHeaderBuffer.putInt(a2Int);
-    if (debug) { out.println("Type_4?: " + a2Int); }
-}
-
-// ............................................................................
-if (debug) { out.println(" --- Chars --- "); }
-
-ArrayList<CharEntry> charEntries = new ArrayList<>();
-
-for (int z = 0; z < entryCount; z++) {
-    
-    String num = String.format("%03d", z + 1);
-    CharEntry entry = new CharEntry(buffer.getChar(),
-                                    buffer.getInt(), buffer.getInt(),
-                                    buffer.getInt(), buffer.getInt());
-    
-    charEntries.add(entry);
-    
-    if (debug) { out.println(num + " - " + entry.toString()); }
-}
-
-// ............................................................................
-if (debug) { out.println(" --- Images --- "); }
+catch (IOException e)
+    { showMessageDialog(this, "Відбулася критична помилка!", "Помилка", 0);
+      return; }
 
 // Створення вихідної папки
-File outDir = new File(inputFile.getParent() + separator +
-                       inputFile.getName().split("\\.")[0]);
-outDir.mkdir();
+outputFile = new File(inputFile.getParent() + separator +
+                      inputFile.getName().split("\\.")[0]);
 
-// Отримання сирих батів заголовку шрифта
-fontHeaderBuffer.flip();
-byte[] fontHeader = new byte[fontHeaderBuffer.remaining()];
-fontHeaderBuffer.get(fontHeader);
+fontProcessor.decompileFont(allBytes, outputFile);
 
-File headerFile = new File(outDir.getPath() + separator + "fontHeader.bin");
-
-// Запис заголовку шрифта у файл
-try (FileOutputStream fis = new FileOutputStream(headerFile))
-    { fis.write(fontHeader); }
-catch (Exception _) {}
-
-// ............................................................................
-
-for (int z = 1; z <= 2; z++) {
-
-int color;
-short width  = buffer.getShort(); // uint16_t width
-short height = buffer.getShort(); // uint16_t height
-int compType = buffer.getInt();   // uint32_t compression_type
-int compSize = buffer.getInt();   // uint32_t size_compressed
-
-data = new byte[compSize];
-buffer.get(data); // uint8_t[size_compressed] compressed_data
-
-// розпаковуємо стиснені дані
-data = compType == 1 ? zlibDecompress(data) : bzip2Decompress(data);
-
-if (debug) { out.println("Image_" + z + ", " + width + "x" + height
-                       + ", comp = " + compType
-                       + ", size = " + compSize); }
-
-BufferedImage image = new BufferedImage(width, height, TYPE_3BYTE_BGR);
-
-// Зчитуємо розпаковані дані та відтворюємо зображення зі шрифтом
-ByteBuffer imageBuffer = ByteBuffer.wrap(data);
-imageBuffer.order(ByteOrder.LITTLE_ENDIAN);
-
-for (int r = 0; r < height; r++) {
-for (int c = 0; c < width; c++) {
-    color = Utils.from565to888rgb(imageBuffer.getShort());
-    image.setRGB(c, r, color);
-}
-}
-
-// Проходимося по всіх символах та записуємо їх у файли
-for (int q = 0; q < charEntries.size(); q++) {
-    
-    CharEntry entry = charEntries.get(q);
-    String num = String.format("%03d", q + 1);
-    
-    int imW = leterRectangleWidth + 1;
-    int imH = fontHeight;
-    int x = entry.getCharX();
-
-    // Обробка можливого виходу за фактичні розміри зображення
-    if (x + imW > image.getWidth()) { imW = image.getWidth() - x; }
-
-    // Отримання частинки зображення із конкретним символом
-    BufferedImage subimage = image.getSubimage(x, 0, imW, imH);
-    
-    String code = Utils.fromCharToString(entry.getChar());
-    
-    String name = "x" + z                      // порядковий номер зображення
-                + "_" + num                    // порядковий номер символу
-                + "_" + code                   // код символу
-                + "_" + entry.getCharX()       // горизонтальний зсув символу
-                + "_" + entry.getCharW()       // ширина символу
-                + "_" + entry.getUnknownOne()  // невід. параметр 1
-                + "_" + entry.getUnknownTwo(); // невід. параметр 2
-    
-    File entryFile = new File(outDir.getPath() + separator + name + ".bmp");
-
-    try { ImageIO.write(subimage, "bmp", entryFile); }
-    catch (IOException e) { err.println(e.getMessage());
-                            return; }
-}
-}
-
-if (debug) { System.out.println(" --- xxx --- "); }
-
+// Відображення інформаційного повідомення
 showMessageDialog(this, "Шрифт успішно розібрано!");
 
 }
@@ -373,100 +202,9 @@ int result = fntCompile.showOpenDialog(this);
 if (result != JFileChooser.APPROVE_OPTION) { return; }
 
 inputFile = fntCompile.getSelectedFile();
-File[] allFiles = inputFile.listFiles();
-
-File file;
-String fileName;
-int maxImageWidth = 0;
-int entryCount = (allFiles.length - 1) / 2;
-ArrayList<BufferedImage> images = new ArrayList<>();
-ArrayList<CharEntry> charEntries = new ArrayList<>();
-
-// ............................................................................
-// Зчитування усіх зображень у папці
-
-for (int z = 1; z <= 2; z++) {
-
-for (int q = 0; q < entryCount; q++) {
-
-String num = String.format("%03d", q + 1);
-
-for (int f = 0; f < allFiles.length; f++) {
-    
-    file = allFiles[f];
-    fileName = file.getName();
-    
-    if (fileName.startsWith("x" + z + "_" + num)) { 
-            
-        try { String[] nameParts = fileName.split("_");
-              char charC     = Utils.fromStringToChar(nameParts[2]);
-              int charX      = Integer.parseInt(nameParts[3]);
-              int charW      = Integer.parseInt(nameParts[4]);
-              int unknownOne = Integer.parseInt(nameParts[5]);
-              int unknownTwo = Integer.parseInt(nameParts[6].split("\\.")[0]);
-              charEntries.add(new CharEntry(charC, charX, charW,
-                                            unknownOne, unknownTwo));
-          
-              if (charX + charW > maxImageWidth) { maxImageWidth = charX +
-                                                                   charW; }
-          
-              images.add(ImageIO.read(file));
-              f = allFiles.length; }
-        
-        catch (IOException | NumberFormatException e)
-            { showMessageDialog(this, "Відбулася критична помилка\n"
-                                     + e.getMessage(), "Помилка", 0);
-              return; } } } } }
-
-// ............................................................................
+fontProcessor.compileFont(inputFile);
 
 showMessageDialog(this, "Шрифт успішно зібрано!");
-
-}
-
-// ============================================================================
-/// Розпакування даних, запакованих з допомогою алгоритму zlib
-
-private byte[] zlibDecompress (byte[] compressed) {
-
-try (ByteArrayInputStream bais = new ByteArrayInputStream(compressed);
-     DeflateCompressorInputStream dis = new DeflateCompressorInputStream(bais);
-     ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-
-    int n;
-    byte[] byteBuffer = new byte[8192];
-    
-    while ((n = dis.read(byteBuffer)) != -1) { baos.write(byteBuffer, 0, n); }
-    
-    return baos.toByteArray();
-}
-
-catch (Exception e)
-    { err.println("zlib decompress error");
-      return null; }
-
-}
-
-// ============================================================================
-/// Розпакування даних, запакованих з допомогою алгоритму bzip2
-
-private byte[] bzip2Decompress (byte[] compressed) {
-
-try (ByteArrayInputStream bais = new ByteArrayInputStream(compressed);
-     BZip2CompressorInputStream bzis = new BZip2CompressorInputStream(bais);
-     ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-
-    int n;
-    byte[] byteBuffer = new byte[8192];
-    
-    while ((n = bzis.read(byteBuffer)) != -1) { baos.write(byteBuffer, 0, n); }
-    
-    return baos.toByteArray();
-}
-
-catch (Exception e)
-    { err.println("bzip2 decompress error");
-      return null; }
 
 }
 
