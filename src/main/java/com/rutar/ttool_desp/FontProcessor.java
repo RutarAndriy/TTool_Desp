@@ -192,8 +192,8 @@ for (int q = 0; q < charEntries.size(); q++) {
                 + "_" + code                   // код символу
                 + "_" + entry.getCharX()       // горизонтальний зсув символу
                 + "_" + entry.getCharW()       // ширина символу
-                + "_" + entry.getUnknownOne()  // невід. параметр 1
-                + "_" + entry.getUnknownTwo()  // невід. параметр 2
+                + "_" + entry.getIndentLeft()  // відступ ліворуч
+                + "_" + entry.getIndentRight() // відступ праворуч
                 + ".bmp"; 
     
     File entryFile = new File(outputFile.getPath() + separator + name);
@@ -336,7 +336,7 @@ if (debug) { out.println(" --- Done --- "); }
 
 if (debug) { out.println(" --- Write Result --- "); }
 
-File outputFile = new File(inputFile.getPath() + "_z.fnt");
+File outputFile = new File(inputFile.getPath() + ".fnt");
 
 try (FileOutputStream fos = new FileOutputStream(outputFile))
     { fos.write(baos.toByteArray()); }

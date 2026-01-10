@@ -9,28 +9,27 @@ import java.nio.*;
 
 public class CharEntry {
 
-private char charC;      // код символу
-private int  charX;      // горизонтальний зсув символу
-private int  charW;      // ширина символу
-private int  unknownOne; // невідомий параметр 1
-private int  unknownTwo; // невідомий параметр 2
+private char charC; // символ
+private int  charX; // горизонтальний зсув символу
+private int  charW; // ширина символу
+private int  indL;  // відступ ліворуч від символу
+private int  indR;  // відступ праворуч від символу
 
 // ============================================================================
 /// Конструктор за замовчуванням
 /// @param charC символ
 /// @param charX горизонтальний зсув символу
 /// @param charW ширина символу
-/// @param unknownOne невідомий параметр 1
-/// @param unknownTwo невідомий параметр 2
+/// @param indL відступ ліворуч від символу
+/// @param indR відступ праворуч від символу
 
-public CharEntry (char charC, int charX, int charW, 
-                  int unknownOne, int unknownTwo) {
+public CharEntry (char charC, int charX, int charW, int indL, int indR) {
     
     this.charC = charC;
     this.charX = charX;
     this.charW = charW;
-    this.unknownOne = unknownOne;
-    this.unknownTwo = unknownTwo;
+    this.indL = indL;
+    this.indR = indR;
 }
 
 // ============================================================================
@@ -50,13 +49,13 @@ public void setCharW (int charW) { this.charW = charW; }
 
 // ============================================================================
 
-public int getUnknownOne() { return unknownOne; }
-public void setUnknownOne (int unknownOne) { this.unknownOne = unknownOne; }
+public int getIndentLeft() { return indL; }
+public void setUnknownOne (int indL) { this.indL = indL; }
 
 // ============================================================================
 
-public int getUnknownTwo() { return unknownTwo; }
-public void setUnknownTwo (int unknownTwo) { this.unknownTwo = unknownTwo; }
+public int getIndentRight() { return indR; }
+public void setUnknownTwo (int indR) { this.indR = indR; }
 
 // ============================================================================
 
@@ -66,8 +65,8 @@ public String toString() {
        return "\"" + getChar()       + "\" - "
                    + getCharX()      + ", "
                    + getCharW()      + ", "
-                   + getUnknownOne() + ", "
-                   + getUnknownTwo();
+                   + getIndentLeft() + ", "
+                   + getIndentRight();
 }
 
 // ============================================================================
@@ -80,8 +79,8 @@ public byte[] toBytes() {
     buffer.putChar(charC);
     buffer.putInt(charX);
     buffer.putInt(charW);
-    buffer.putInt(unknownOne);
-    buffer.putInt(unknownTwo);
+    buffer.putInt(indL);
+    buffer.putInt(indR);
     
     return buffer.array();
 }
