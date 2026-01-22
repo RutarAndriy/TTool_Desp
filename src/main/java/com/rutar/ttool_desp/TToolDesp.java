@@ -32,6 +32,10 @@ private File outputFile;                                       // вихідни
 
 private final JFileChooser fntCompile;                  // компілювання шрифтів
 private final JFileChooser fntDecompile;              // декомпілювання шрифтів
+private final JFileChooser mapCompile;                     // компілювання карт
+private final JFileChooser mapDecompile;                 // декомпілювання карт
+
+private final MapProcessor  mapProcessor;                      // обробник карт
 private final FontProcessor fontProcessor;                  // обробник шрифтів
 
 private String appDescription;                                 // опис програми
@@ -49,6 +53,14 @@ private final File homeDir = FileSystemView.getFileSystemView()
 private final FileNameExtensionFilter extFnt =
           new FileNameExtensionFilter("Desperados файли шрифтів", "fnt");
 
+// Фільтр для файлів із розширенням *.fnt
+private final FileNameExtensionFilter extMap =
+          new FileNameExtensionFilter("Desperados запаковані карти", "map");
+
+// Фільтр для файлів із розширенням *.bmp
+private final FileNameExtensionFilter extBmp =
+          new FileNameExtensionFilter("Desperados розпаковані карти", "bmp");
+
 private SearchDialog searchDialog;         // діалогове вікно пошуку інформації
 
 public static boolean debug = false; // якщо true - увімк. режим налагоджування
@@ -59,6 +71,7 @@ public static boolean debug = false; // якщо true - увімк. режим �
 public TToolDesp() {
 
 initComponents();
+mapProcessor  = new MapProcessor(this);
 fontProcessor = new FontProcessor(this);
 
 fntDecompile = new JFileChooser();
@@ -74,6 +87,20 @@ fntCompile.removeChoosableFileFilter(fntCompile
           .getChoosableFileFilters()[0]);
 fntCompile.addChoosableFileFilter(extFnt);
 fntCompile.setCurrentDirectory(homeDir);
+
+mapDecompile = new JFileChooser();
+mapDecompile.setFileSelectionMode(FILES_ONLY);
+mapDecompile.removeChoosableFileFilter(mapDecompile
+            .getChoosableFileFilters()[0]);
+mapDecompile.addChoosableFileFilter(extMap);
+mapDecompile.setCurrentDirectory(homeDir);
+
+mapCompile = new JFileChooser();
+mapCompile.setFileSelectionMode(FILES_ONLY);
+mapCompile.removeChoosableFileFilter(mapCompile
+          .getChoosableFileFilters()[0]);
+mapCompile.addChoosableFileFilter(extBmp);
+mapCompile.setCurrentDirectory(homeDir);
 
 }
 
@@ -209,6 +236,47 @@ showMessageDialog(this, "Шрифт успішно зібрано!");
 }
 
 // ============================================================================
+/// Вибір запакованої карти для розпакування
+
+private void showDecompileMapDialog() {
+
+int result = mapDecompile.showOpenDialog(this);
+if (result != JFileChooser.APPROVE_OPTION) { return; }
+
+inputFile = mapDecompile.getSelectedFile();
+
+// Читання всіх байтів карти
+try { allBytes = Files.readAllBytes(inputFile.toPath()); }
+catch (IOException e)
+    { showMessageDialog(this, "Відбулася критична помилка!", "Помилка", 0);
+      return; }
+
+// Створення вихідної папки
+outputFile = new File(inputFile.getPath().replace(".map", ".bmp"));
+
+mapProcessor.decompileMap(allBytes, outputFile);
+
+// Відображення інформаційного повідомення
+showMessageDialog(this, "Карту успішно розпаковано!");
+
+}
+
+// ============================================================================
+/// Вибір розпакованої карти для запакування
+
+private void showCompileMapDialog() {
+
+int result = mapCompile.showOpenDialog(this);
+if (result != JFileChooser.APPROVE_OPTION) { return; }
+
+inputFile = mapCompile.getSelectedFile();
+mapProcessor.compileMap(inputFile);
+
+showMessageDialog(this, "Карту успішно запаковано!");
+
+}
+
+// ============================================================================
 /// Цей метод викликається з конструктора для ініціалізації форми.
 /// УВАГА: НЕ змінюйте цей код. Вміст цього методу завжди 
 /// перезапишеться редактором форм
@@ -233,6 +301,9 @@ showMessageDialog(this, "Шрифт успішно зібрано!");
         mn_edit = new JMenu();
         mni_fntDecompile = new JMenuItem();
         mni_fntCompile = new JMenuItem();
+        sep_three = new JPopupMenu.Separator();
+        mni_mapDecompile = new JMenuItem();
+        mni_mapCompile = new JMenuItem();
         mn_info = new JMenu();
         mni_about = new JMenuItem();
 
@@ -336,6 +407,25 @@ showMessageDialog(this, "Шрифт успішно зібрано!");
             }
         });
         mn_edit.add(mni_fntCompile);
+        mn_edit.add(sep_three);
+
+        mni_mapDecompile.setText("Розпакувати карту");
+        mni_mapDecompile.setActionCommand("decompileMap");
+        mni_mapDecompile.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                onMenuClick(evt);
+            }
+        });
+        mn_edit.add(mni_mapDecompile);
+
+        mni_mapCompile.setText("Запакувати карту");
+        mni_mapCompile.setActionCommand("compileMap");
+        mni_mapCompile.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                onMenuClick(evt);
+            }
+        });
+        mn_edit.add(mni_mapCompile);
 
         mnb_main.add(mn_edit);
 
@@ -392,6 +482,9 @@ showMessageDialog(this, "Шрифт успішно зібрано!");
         case "decompileFont" -> showDecompileFontDialog();
         case "compileFont"   -> showCompileFontDialog();
         
+        case "decompileMap"  -> showDecompileMapDialog();
+        case "compileMap"    -> showCompileMapDialog();
+        
     }   
     }//GEN-LAST:event_onMenuClick
 
@@ -417,10 +510,13 @@ showMessageDialog(this, "Шрифт успішно зібрано!");
     private JMenuItem mni_find;
     private JMenuItem mni_fntCompile;
     private JMenuItem mni_fntDecompile;
+    private JMenuItem mni_mapCompile;
+    private JMenuItem mni_mapDecompile;
     private JMenuItem mni_open;
     private JMenuItem mni_save;
     private JPanel pnl_footer;
     private JPopupMenu.Separator sep_one;
+    private JPopupMenu.Separator sep_three;
     private JPopupMenu.Separator sep_two;
     private JScrollPane sp_table;
     public JTable tbl_main;

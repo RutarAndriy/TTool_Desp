@@ -89,6 +89,26 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="onMenuClick"/>
               </Events>
             </MenuItem>
+            <MenuItem class="javax.swing.JPopupMenu$Separator" name="sep_three">
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mni_mapDecompile">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="&#x420;&#x43e;&#x437;&#x43f;&#x430;&#x43a;&#x443;&#x432;&#x430;&#x442;&#x438; &#x43a;&#x430;&#x440;&#x442;&#x443;"/>
+                <Property name="actionCommand" type="java.lang.String" value="decompileMap"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="onMenuClick"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mni_mapCompile">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="&#x417;&#x430;&#x43f;&#x430;&#x43a;&#x443;&#x432;&#x430;&#x442;&#x438; &#x43a;&#x430;&#x440;&#x442;&#x443;"/>
+                <Property name="actionCommand" type="java.lang.String" value="compileMap"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="onMenuClick"/>
+              </Events>
+            </MenuItem>
           </SubComponents>
         </Menu>
         <Menu class="javax.swing.JMenu" name="mn_info">
