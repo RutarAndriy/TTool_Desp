@@ -7,9 +7,15 @@ import javax.swing.table.*;
 // ............................................................................
 /// Реалізація зміненої промальовки клітинок таблиці
 /// @author Rutar_Andriy
-/// 27.12.2025
+/// 07.02.2026
 
 public class CellRender extends DefaultTableCellRenderer {
+
+private Color searchColor;
+private Color defaultColor;
+
+private static int searchedCol = -1;
+private static int searchedRow = -1;
 
 // ============================================================================
 
@@ -18,17 +24,42 @@ public Component getTableCellRendererComponent(JTable table,
                                                Object value,
                                                boolean isSelected,
                                                boolean hasFocus,
-                                               int row, int column) {
+                                               int row, int col) {
 
 Component component = super.getTableCellRendererComponent(table, value,
-                                                          isSelected, hasFocus,
-                                                          row, column);
+                                                          isSelected,
+                                                          hasFocus, row, col);
 
-if (column != 2) { component.setForeground(Color.GRAY); }
+if (defaultColor == null)
+    { defaultColor = component.getForeground();
+      searchColor = UIManager.getColor("Component.accentColor"); }
+
+// ............................................................................
+
+if (searchedCol != -1 && searchedCol == col &&
+    searchedRow != -1 && searchedRow == row)
+     { component.setForeground(searchColor); }
+else { setNormalColor(component, col, row);  }
 
 return component;
 
 }
+
+// ============================================================================
+
+private void setNormalColor (Component component, int c, int r) {
+    
+    if (c != 2)
+         { component.setForeground(Color.GRAY);   }
+    else { component.setForeground(defaultColor); }
+    
+}
+
+// ============================================================================
+
+public static void setSearchedCell (int searchedCol, int searchedRow)
+    { CellRender.searchedCol = searchedCol;
+      CellRender.searchedRow = searchedRow; }
 
 // Кінець класу CellRender ====================================================
 

@@ -102,6 +102,12 @@
       <artifactId>commons-compress</artifactId>
       <version>1.28.0</version>
     </dependency>
+    <!-- Бібліотека для локалізації стандартних swing-компонентів -->
+    <dependency>
+      <groupId>com.github.RutarAndriy</groupId>
+      <artifactId>UA_Translator</artifactId>
+      <version>1.2.0</version>
+    </dependency>
   </dependencies>
 
   <!-- Конфігурація збірки -->

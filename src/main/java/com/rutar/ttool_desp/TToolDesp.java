@@ -6,14 +6,17 @@ import java.net.*;
 import java.nio.*;
 import java.util.*;
 import javax.swing.*;
+import javax.imageio.*;
 import java.util.jar.*;
 import java.nio.file.*;
+import java.awt.image.*;
 import java.awt.event.*;
 import java.nio.charset.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 import com.formdev.flatlaf.*;
 import javax.swing.filechooser.*;
+import com.rutar.ua_translator.*;
 import com.formdev.flatlaf.themes.*;
 
 import static java.io.File.*;
@@ -71,6 +74,8 @@ public static boolean debug = false; // якщо true - увімк. режим �
 public TToolDesp() {
 
 initComponents();
+initAppIcons();
+
 mapProcessor  = new MapProcessor(this);
 fontProcessor = new FontProcessor(this);
 
@@ -113,17 +118,20 @@ public static void main (String args[]) {
     if (args.length > 0 &&
         args[0].equals("--debug")) { debug = true; }
     
-    Map<String, String> defaults = new HashMap<>();
-    defaults.put("@accentColor", "#FF0000");
-    FlatLaf.setGlobalExtraDefaults(defaults);
+    // ........................................................................
+    
+    UATranslator.init();
+    UIManager.put("FileChooser.readOnly", true);
 
-    UIManager.put("MenuItem.minimumIconSize", new Dimension(0, 0));
-    UIManager.put("MenuItem.selectionType", "underline");
-    UIManager.put("MenuBar.selectionType", "underline");
-    UIManager.put("MenuItem.iconTextGap", 0);
+    JFrame .setDefaultLookAndFeelDecorated(true);
+    JDialog.setDefaultLookAndFeelDecorated(true);
+    
+    FlatLaf.registerCustomDefaultsSource("com.rutar.ttool_desp.themes");
 
     try { FlatMacDarkLaf.setup(); }
     catch (Exception e) {}
+    
+    // ........................................................................
     
     EventQueue.invokeLater(() -> {
         new TToolDesp().setVisible(true);
@@ -274,6 +282,28 @@ mapProcessor.compileMap(inputFile);
 
 showMessageDialog(this, "Карту успішно запаковано!");
 
+}
+
+// ============================================================================
+/// Встановлення іконок для головного вікна
+
+private void initAppIcons() {
+
+    BufferedImage icon;
+    ArrayList<Image> appIcons = new ArrayList<>();
+
+    try {
+        
+    for (String resource : new String[] { "icon_16.png",
+                                          "icon_32.png" }) {
+        resource = "icons/" + resource;
+        icon = ImageIO.read(getClass().getResourceAsStream(resource));
+        appIcons.add(icon); }
+    
+    setIconImages(appIcons); }
+    
+    catch (IOException _) { }
+    
 }
 
 // ============================================================================
