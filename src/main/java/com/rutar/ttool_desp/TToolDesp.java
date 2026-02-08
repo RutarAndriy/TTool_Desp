@@ -37,6 +37,8 @@ private final JFileChooser fntCompile;                  // компілюван�
 private final JFileChooser fntDecompile;              // декомпілювання шрифтів
 private final JFileChooser mapCompile;                     // компілювання карт
 private final JFileChooser mapDecompile;                 // декомпілювання карт
+private final JFileChooser sxtCompile;       // компілювання gameover-логотипів
+private final JFileChooser sxtDecompile;   // декомпілювання gameover-логотипів
 
 private final MapProcessor  mapProcessor;                      // обробник карт
 private final FontProcessor fontProcessor;                  // обробник шрифтів
@@ -47,24 +49,11 @@ private String appDescription;                                 // опис пр�
 
 private byte[] allBytes;                                   // всі зчитані байти
 private ByteBuffer buffer;                        // буфер для зчитування даних
+private SearchDialog searchDialog;         // діалогове вікно пошуку інформації
 
 // Домашня директорія користувача
-private final File homeDir = FileSystemView.getFileSystemView()
-                                           .getHomeDirectory();
-
-// Фільтр для файлів із розширенням *.fnt
-private final FileNameExtensionFilter extFnt =
-          new FileNameExtensionFilter("Desperados файли шрифтів", "fnt");
-
-// Фільтр для файлів із розширенням *.fnt
-private final FileNameExtensionFilter extMap =
-          new FileNameExtensionFilter("Desperados запаковані карти", "map");
-
-// Фільтр для файлів із розширенням *.bmp
-private final FileNameExtensionFilter extBmp =
-          new FileNameExtensionFilter("Desperados розпаковані карти", "bmp");
-
-private SearchDialog searchDialog;         // діалогове вікно пошуку інформації
+public static final File HOME_DIR = FileSystemView.getFileSystemView()
+                                                  .getHomeDirectory();
 
 public static boolean debug = false; // якщо true - увімк. режим налагоджування
 
@@ -79,33 +68,18 @@ initAppIcons();
 mapProcessor  = new MapProcessor(this);
 fontProcessor = new FontProcessor(this);
 
-fntDecompile = new JFileChooser();
-fntDecompile.setFileSelectionMode(FILES_ONLY);
-fntDecompile.removeChoosableFileFilter(fntDecompile
-            .getChoosableFileFilters()[0]);
-fntDecompile.addChoosableFileFilter(extFnt);
-fntDecompile.setCurrentDirectory(homeDir);
-
-fntCompile = new JFileChooser();
-fntCompile.setFileSelectionMode(DIRECTORIES_ONLY);
-fntCompile.removeChoosableFileFilter(fntCompile
-          .getChoosableFileFilters()[0]);
-fntCompile.addChoosableFileFilter(extFnt);
-fntCompile.setCurrentDirectory(homeDir);
-
-mapDecompile = new JFileChooser();
-mapDecompile.setFileSelectionMode(FILES_ONLY);
-mapDecompile.removeChoosableFileFilter(mapDecompile
-            .getChoosableFileFilters()[0]);
-mapDecompile.addChoosableFileFilter(extMap);
-mapDecompile.setCurrentDirectory(homeDir);
-
-mapCompile = new JFileChooser();
-mapCompile.setFileSelectionMode(FILES_ONLY);
-mapCompile.removeChoosableFileFilter(mapCompile
-          .getChoosableFileFilters()[0]);
-mapCompile.addChoosableFileFilter(extBmp);
-mapCompile.setCurrentDirectory(homeDir);
+fntDecompile = Utils.getFileChooser("fnt", FILES_ONLY,
+                                    "Desperados файли шрифтів");
+fntCompile   = Utils.getFileChooser("fnt", DIRECTORIES_ONLY,
+                                    "Desperados файли шрифтів");
+mapDecompile = Utils.getFileChooser("map", FILES_ONLY,
+                                    "Desperados запаковані карти");
+mapCompile   = Utils.getFileChooser("bmp", FILES_ONLY,
+                                    "Desperados розпаковані карти");
+sxtDecompile = Utils.getFileChooser("sxt", FILES_ONLY,
+                                    "Desperados запаковані логотипи");
+sxtCompile   = Utils.getFileChooser("bmp", FILES_ONLY,
+                                    "Desperados розпаковані логотипи");
 
 }
 
@@ -233,6 +207,8 @@ showMessageDialog(this, "Шрифт успішно розібрано!");
 
 private void showCompileFontDialog() {
 
+fntCompile.setCurrentDirectory(Utils.getLastDir(fntDecompile));
+
 int result = fntCompile.showOpenDialog(this);
 if (result != JFileChooser.APPROVE_OPTION) { return; }
 
@@ -259,7 +235,7 @@ catch (IOException e)
     { showMessageDialog(this, "Відбулася критична помилка!", "Помилка", 0);
       return; }
 
-// Створення вихідної папки
+// Створення вихідного файлу
 outputFile = new File(inputFile.getPath().replace(".map", ".bmp"));
 
 mapProcessor.decompileMap(allBytes, outputFile);
@@ -274,6 +250,8 @@ showMessageDialog(this, "Карту успішно розпаковано!");
 
 private void showCompileMapDialog() {
 
+mapCompile.setCurrentDirectory(Utils.getLastDir(mapDecompile));
+
 int result = mapCompile.showOpenDialog(this);
 if (result != JFileChooser.APPROVE_OPTION) { return; }
 
@@ -281,6 +259,49 @@ inputFile = mapCompile.getSelectedFile();
 mapProcessor.compileMap(inputFile);
 
 showMessageDialog(this, "Карту успішно запаковано!");
+
+}
+
+// ============================================================================
+/// Вибір запакованого gameover-логотипу для розпакування
+
+private void showDecompileSxtDialog() {
+
+int result = sxtDecompile.showOpenDialog(this);
+if (result != JFileChooser.APPROVE_OPTION) { return; }
+
+inputFile = sxtDecompile.getSelectedFile();
+
+// Читання всіх байтів карти
+try { allBytes = Files.readAllBytes(inputFile.toPath()); }
+catch (IOException e)
+    { showMessageDialog(this, "Відбулася критична помилка!", "Помилка", 0);
+      return; }
+
+// Створення вихідного файлу
+outputFile = new File(inputFile.getPath().replace(".sxt", ".bmp"));
+
+mapProcessor.decompileMap(allBytes, outputFile);
+
+// Відображення інформаційного повідомення
+showMessageDialog(this, "Логотип успішно розпаковано!");
+
+}
+
+// ============================================================================
+/// Вибір розпакованого gameover-логотипу для запакування
+
+private void showCompileSxtDialog() {
+
+sxtCompile.setCurrentDirectory(Utils.getLastDir(sxtDecompile));
+
+int result = sxtCompile.showOpenDialog(this);
+if (result != JFileChooser.APPROVE_OPTION) { return; }
+
+inputFile = sxtCompile.getSelectedFile();
+mapProcessor.compileMap(inputFile);
+
+showMessageDialog(this, "Логотип успішно запаковано!");
 
 }
 
@@ -334,6 +355,9 @@ private void initAppIcons() {
         sep_three = new JPopupMenu.Separator();
         mni_mapDecompile = new JMenuItem();
         mni_mapCompile = new JMenuItem();
+        sep_four = new JPopupMenu.Separator();
+        mni_sxtDecompile = new JMenuItem();
+        mni_sxtCompile = new JMenuItem();
         mn_info = new JMenu();
         mni_about = new JMenuItem();
 
@@ -439,7 +463,7 @@ private void initAppIcons() {
         mn_edit.add(mni_fntCompile);
         mn_edit.add(sep_three);
 
-        mni_mapDecompile.setText("Розпакувати карту");
+        mni_mapDecompile.setText("Розпакувати *.map");
         mni_mapDecompile.setActionCommand("decompileMap");
         mni_mapDecompile.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -448,7 +472,7 @@ private void initAppIcons() {
         });
         mn_edit.add(mni_mapDecompile);
 
-        mni_mapCompile.setText("Запакувати карту");
+        mni_mapCompile.setText("Запакувати *.map");
         mni_mapCompile.setActionCommand("compileMap");
         mni_mapCompile.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -456,6 +480,25 @@ private void initAppIcons() {
             }
         });
         mn_edit.add(mni_mapCompile);
+        mn_edit.add(sep_four);
+
+        mni_sxtDecompile.setText("Розпакувати *.sxt");
+        mni_sxtDecompile.setActionCommand("decompileSxt");
+        mni_sxtDecompile.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                onMenuClick(evt);
+            }
+        });
+        mn_edit.add(mni_sxtDecompile);
+
+        mni_sxtCompile.setText("Запакувати *.sxt");
+        mni_sxtCompile.setActionCommand("compileSxt");
+        mni_sxtCompile.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                onMenuClick(evt);
+            }
+        });
+        mn_edit.add(mni_sxtCompile);
 
         mnb_main.add(mn_edit);
 
@@ -515,6 +558,8 @@ private void initAppIcons() {
         case "decompileMap"  -> showDecompileMapDialog();
         case "compileMap"    -> showCompileMapDialog();
         
+        case "decompileSxt"  -> showDecompileSxtDialog();
+        case "compileSxt"    -> showCompileSxtDialog();
     }   
     }//GEN-LAST:event_onMenuClick
 
@@ -544,7 +589,10 @@ private void initAppIcons() {
     private JMenuItem mni_mapDecompile;
     private JMenuItem mni_open;
     private JMenuItem mni_save;
+    private JMenuItem mni_sxtCompile;
+    private JMenuItem mni_sxtDecompile;
     private JPanel pnl_footer;
+    private JPopupMenu.Separator sep_four;
     private JPopupMenu.Separator sep_one;
     private JPopupMenu.Separator sep_three;
     private JPopupMenu.Separator sep_two;

@@ -93,7 +93,7 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="mni_mapDecompile">
               <Properties>
-                <Property name="text" type="java.lang.String" value="&#x420;&#x43e;&#x437;&#x43f;&#x430;&#x43a;&#x443;&#x432;&#x430;&#x442;&#x438; &#x43a;&#x430;&#x440;&#x442;&#x443;"/>
+                <Property name="text" type="java.lang.String" value="&#x420;&#x43e;&#x437;&#x43f;&#x430;&#x43a;&#x443;&#x432;&#x430;&#x442;&#x438; *.map"/>
                 <Property name="actionCommand" type="java.lang.String" value="decompileMap"/>
               </Properties>
               <Events>
@@ -102,8 +102,28 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="mni_mapCompile">
               <Properties>
-                <Property name="text" type="java.lang.String" value="&#x417;&#x430;&#x43f;&#x430;&#x43a;&#x443;&#x432;&#x430;&#x442;&#x438; &#x43a;&#x430;&#x440;&#x442;&#x443;"/>
+                <Property name="text" type="java.lang.String" value="&#x417;&#x430;&#x43f;&#x430;&#x43a;&#x443;&#x432;&#x430;&#x442;&#x438; *.map"/>
                 <Property name="actionCommand" type="java.lang.String" value="compileMap"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="onMenuClick"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JPopupMenu$Separator" name="sep_four">
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mni_sxtDecompile">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="&#x420;&#x43e;&#x437;&#x43f;&#x430;&#x43a;&#x443;&#x432;&#x430;&#x442;&#x438; *.sxt"/>
+                <Property name="actionCommand" type="java.lang.String" value="decompileSxt"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="onMenuClick"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mni_sxtCompile">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="&#x417;&#x430;&#x43f;&#x430;&#x43a;&#x443;&#x432;&#x430;&#x442;&#x438; *.sxt"/>
+                <Property name="actionCommand" type="java.lang.String" value="compileSxt"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="onMenuClick"/>

@@ -2,12 +2,16 @@ package com.rutar.ttool_desp;
 
 // ............................................................................
 
+
 import java.io.*;
+import javax.swing.*;
 import java.nio.charset.*;
+import javax.swing.filechooser.*;
 import org.apache.commons.compress.compressors.bzip2.*;
 import org.apache.commons.compress.compressors.deflate.*;
 
 import static java.lang.System.*;
+import static com.rutar.ttool_desp.TToolDesp.*;
 
 /// Корисні допоміжні методи
 /// @author Rutar_Andriy
@@ -177,6 +181,50 @@ try (ByteArrayInputStream bais = new ByteArrayInputStream(compressed);
 catch (Exception e)
     { err.println("bzip2 decompress error");
       return null; }
+
+}
+
+// ============================================================================
+/// Отримання налаштованого JFileChooser'а
+/// @param ext розширення файлів
+/// @param selectionMode тип виділення (папки, файли, папки+файли)
+/// @param desc опис розширення файлів
+/// @return налаштований екземпляр JFileChooser'а
+
+public static JFileChooser getFileChooser (String ext, int selectionMode,
+                                           String desc) {
+    
+    JFileChooser chooser = new JFileChooser();
+    FileNameExtensionFilter filter = new FileNameExtensionFilter(desc, ext);
+    
+    chooser.setFileSelectionMode(selectionMode);
+    chooser.removeChoosableFileFilter(chooser
+           .getChoosableFileFilters()[0]);
+    chooser.addChoosableFileFilter(filter);
+    chooser.setCurrentDirectory(HOME_DIR);
+    
+    return chooser;
+
+}
+
+// ============================================================================
+/// Отримання папки, у якій міститься останній виділений файл/папка
+/// @param chooser jFileChooser, який використовувався для вибору файлу
+/// @return папка, у якій міститься останній виділений файл/папка
+
+public static File getLastDir (JFileChooser chooser) {
+    
+    File file = chooser.getSelectedFile();
+    
+    // Якщо останього файлу немає - повертаємо null
+    if (file == null)
+        { return null; }
+    // Якщо останній файл є папкою - повертаємо батьківську папку
+    else if (file.isDirectory())
+        { return new File(file.getParent()); }
+    // Якщо останній файл є файлом - повертаємо шлях до його папки
+    else
+        { return new File(file.getPath().replace(file.getName(), "")); }
 
 }
 
