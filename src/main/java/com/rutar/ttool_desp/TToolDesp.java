@@ -40,13 +40,14 @@ private final JFileChooser mapDecompile;                 // декомпілюв
 private final JFileChooser sxtCompile;       // компілювання gameover-логотипів
 private final JFileChooser sxtDecompile;   // декомпілювання gameover-логотипів
 
-private final MapProcessor  mapProcessor;                      // обробник карт
+private final RawProcessor rawProcessor;                       // обробник карт
 private final FontProcessor fontProcessor;                  // обробник шрифтів
 
 private String appDescription;                                 // опис програми
 
 // ............................................................................
 
+private File tmp;                                           // допоміжна змінна
 private byte[] allBytes;                                   // всі зчитані байти
 private ByteBuffer buffer;                        // буфер для зчитування даних
 private SearchDialog searchDialog;         // діалогове вікно пошуку інформації
@@ -65,7 +66,7 @@ public TToolDesp() {
 initComponents();
 initAppIcons();
 
-mapProcessor  = new MapProcessor(this);
+rawProcessor  = new RawProcessor(this);
 fontProcessor = new FontProcessor(this);
 
 fntDecompile = Utils.getFileChooser("fnt", FILES_ONLY,
@@ -207,7 +208,8 @@ showMessageDialog(this, "Шрифт успішно розібрано!");
 
 private void showCompileFontDialog() {
 
-fntCompile.setCurrentDirectory(Utils.getLastDir(fntDecompile));
+tmp = Utils.getLastDir(fntDecompile);
+if (tmp != null) { fntCompile.setCurrentDirectory(tmp); }
 
 int result = fntCompile.showOpenDialog(this);
 if (result != JFileChooser.APPROVE_OPTION) { return; }
@@ -238,7 +240,7 @@ catch (IOException e)
 // Створення вихідного файлу
 outputFile = new File(inputFile.getPath().replace(".map", ".bmp"));
 
-mapProcessor.decompileMap(allBytes, outputFile);
+rawProcessor.decompileRaw(allBytes, outputFile);
 
 // Відображення інформаційного повідомення
 showMessageDialog(this, "Карту успішно розпаковано!");
@@ -250,13 +252,14 @@ showMessageDialog(this, "Карту успішно розпаковано!");
 
 private void showCompileMapDialog() {
 
-mapCompile.setCurrentDirectory(Utils.getLastDir(mapDecompile));
+tmp = Utils.getLastDir(mapDecompile);
+if (tmp != null) { mapCompile.setCurrentDirectory(tmp); }
 
 int result = mapCompile.showOpenDialog(this);
 if (result != JFileChooser.APPROVE_OPTION) { return; }
 
 inputFile = mapCompile.getSelectedFile();
-mapProcessor.compileMap(inputFile);
+rawProcessor.compileRaw(inputFile, "map");
 
 showMessageDialog(this, "Карту успішно запаковано!");
 
@@ -281,7 +284,7 @@ catch (IOException e)
 // Створення вихідного файлу
 outputFile = new File(inputFile.getPath().replace(".sxt", ".bmp"));
 
-mapProcessor.decompileMap(allBytes, outputFile);
+rawProcessor.decompileRaw(allBytes, outputFile);
 
 // Відображення інформаційного повідомення
 showMessageDialog(this, "Логотип успішно розпаковано!");
@@ -293,13 +296,14 @@ showMessageDialog(this, "Логотип успішно розпаковано!")
 
 private void showCompileSxtDialog() {
 
-sxtCompile.setCurrentDirectory(Utils.getLastDir(sxtDecompile));
+tmp = Utils.getLastDir(sxtDecompile);
+if (tmp != null) { sxtCompile.setCurrentDirectory(tmp); }
 
 int result = sxtCompile.showOpenDialog(this);
 if (result != JFileChooser.APPROVE_OPTION) { return; }
 
 inputFile = sxtCompile.getSelectedFile();
-mapProcessor.compileMap(inputFile);
+rawProcessor.compileRaw(inputFile, "sxt");
 
 showMessageDialog(this, "Логотип успішно запаковано!");
 

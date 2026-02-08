@@ -16,7 +16,7 @@ import static com.rutar.ttool_desp.TToolDesp.*;
 /// @author Rutar_Andriy
 /// 22.01.2026
 
-public class MapProcessor {
+public class RawProcessor {
 
 private byte[] data;
 private File tmpFile;
@@ -28,14 +28,14 @@ private final TToolDesp mainWindow;
 /// Конструктор за замовчуванням
 /// @param mainWindow головне вікно програми
 
-public MapProcessor (TToolDesp mainWindow) { this.mainWindow = mainWindow; }
+public RawProcessor (TToolDesp mainWindow) { this.mainWindow = mainWindow; }
 
 // ============================================================================
-/// Розпаковування *.map файлів
+/// Розпаковування *.map та *.sxt файлів
 /// @param allBytes усі зчитані байти файлу
 /// @param outputFile вихідний файл
 
-public void decompileMap (byte[] allBytes, File outputFile) {
+public void decompileRaw (byte[] allBytes, File outputFile) {
 
 int color;
 BufferedImage mapImage;                                     // зображення карти
@@ -101,10 +101,11 @@ if (debug) { out.println(" --- xxx --- "); }
 }
 
 // ============================================================================
-/// Запапаковування *.map файлів
+/// Запапаковування *.map та *.sxt файлів
 /// @param inputFile вхідний *.bmp файл
+/// @param ext розширення вихідного файлу
 
-public void compileMap (File inputFile) {
+public void compileRaw (File inputFile, String ext) {
 
 try {
 
@@ -159,7 +160,7 @@ if (debug) { out.println(" --- Write Map --- "); }
 // ............................................................................
 // Записуємо результат у файл
 
-File outputFile = new File(inputFile.getPath().replace(".bmp", ".map"));
+File outputFile = new File(inputFile.getPath().replace(".bmp", "." + ext));
 
 try (FileOutputStream fos = new FileOutputStream(outputFile))
     { fos.write(baos.toByteArray()); }
@@ -182,6 +183,6 @@ private void showErrorMessage (Exception e) {
                                  + e.getMessage(), "Помилка", 0);
 }
 
-// Кінець класу MapProcessor ==================================================
+// Кінець класу RawProcessor ==================================================
 
 }
