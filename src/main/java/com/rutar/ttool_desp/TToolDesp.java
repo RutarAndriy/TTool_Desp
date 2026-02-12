@@ -49,7 +49,6 @@ private String appDescription;                                 // опис пр�
 
 private File tmp;                                           // допоміжна змінна
 private byte[] allBytes;                                   // всі зчитані байти
-private ByteBuffer buffer;                        // буфер для зчитування даних
 private SearchDialog searchDialog;         // діалогове вікно пошуку інформації
 
 // Домашня директорія користувача
@@ -164,12 +163,9 @@ showMessageDialog(this, pane, "Про програму", INFORMATION_MESSAGE);
 // ============================================================================
 /// Відображення вікна пошуку інформації
 
-private void showSearchDialog() {
-        
-    if (searchDialog == null) { searchDialog = new SearchDialog(this); }    
-    searchDialog.setVisible(true);
-
-}
+private void showSearchDialog()
+    { searchDialog = new SearchDialog(this);   
+      searchDialog.setVisible(true); }
 
 // ============================================================================
 /// Відображення вікна підтвердження виходу
