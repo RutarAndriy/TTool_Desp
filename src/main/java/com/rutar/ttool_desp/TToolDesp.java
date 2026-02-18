@@ -3,7 +3,6 @@ package com.rutar.ttool_desp;
 import java.io.*;
 import java.awt.*;
 import java.net.*;
-import java.nio.*;
 import java.util.*;
 import javax.swing.*;
 import javax.imageio.*;
