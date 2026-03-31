@@ -1,9 +1,7 @@
 package com.rutar.ttool_desp;
 
-// ............................................................................
-
-
 import java.io.*;
+import java.awt.*;
 import javax.swing.*;
 import java.nio.charset.*;
 import javax.swing.filechooser.*;
@@ -13,6 +11,7 @@ import org.apache.commons.compress.compressors.deflate.*;
 import static java.lang.System.*;
 import static com.rutar.ttool_desp.TToolDesp.*;
 
+// ............................................................................
 /// Корисні допоміжні методи
 /// @author Rutar_Andriy
 /// 01.01.2026
@@ -181,6 +180,22 @@ try (ByteArrayInputStream bais = new ByteArrayInputStream(compressed);
 catch (Exception e)
     { err.println("bzip2 decompress error");
       return null; }
+
+}
+
+// ============================================================================
+/// Виділення клітинок у таблиці
+/// @param table таблиця, клітинки якої потрібно виділяти
+/// @param col номер стовбця клітинки, яку потрібно виділити
+/// @param row номер рядка клітинки, яку потрібно виділити
+
+public static void selectCell (JTable table, int col, int row) {
+
+    table.setRowSelectionInterval   (row, row);
+    table.setColumnSelectionInterval(col, col);
+
+    Rectangle rect = table.getCellRect(row, col, true);
+    table.scrollRectToVisible(rect);
 
 }
 
