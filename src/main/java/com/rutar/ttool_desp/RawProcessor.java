@@ -19,7 +19,6 @@ import static com.rutar.ttool_desp.TToolDesp.*;
 public class RawProcessor {
 
 private byte[] data;
-private File tmpFile;
 private ByteBuffer mainBuffer, tmpBuffer;
 
 private final TToolDesp mainWindow;
@@ -84,8 +83,8 @@ tmpBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
 for (int y = 0; y < mapH; y++) {
 for (int x = 0; x < mapW; x++) {
-    color = Utils.from565to888rgb(tmpBuffer.getShort());
-    mapImage.setRGB(x, y, color);
+  color = Utils.from565to888rgb(tmpBuffer.getShort());
+  mapImage.setRGB(x, y, color);
 }
 }
 
@@ -113,7 +112,6 @@ if (debug) { out.println(" --- Read Image --- "); }
 
 // Читаємо файл зображення
 BufferedImage imgMap = ImageIO.read(inputFile);
-Graphics g = imgMap.getGraphics();
 
 int mapW = imgMap.getWidth();
 int mapH = imgMap.getHeight();
@@ -124,9 +122,9 @@ tmpBuffer.order(ByteOrder.LITTLE_ENDIAN);
 // Перетворюємо кольори пікселів у формат rgb565
 for (int y = 0; y < mapH; y++) {
 for (int x = 0; x < mapW;  x++) {
-    int rgb888 = imgMap.getRGB(x, y);
-    short rgb565 = Utils.from888to565rgb(rgb888);
-    tmpBuffer.putShort(rgb565);
+  int rgb888 = imgMap.getRGB(x, y);
+  short rgb565 = Utils.from888to565rgb(rgb888);
+  tmpBuffer.putShort(rgb565);
 }
 }
 
@@ -163,9 +161,9 @@ if (debug) { out.println(" --- Write Map --- "); }
 File outputFile = new File(inputFile.getPath().replace(".bmp", "." + ext));
 
 try (FileOutputStream fos = new FileOutputStream(outputFile))
-    { fos.write(baos.toByteArray()); }
+  { fos.write(baos.toByteArray()); }
 catch (Exception e)
-    { showErrorMessage(e); }
+  { showErrorMessage(e); }
 
 if (debug) { out.println(" --- Done --- "); }
 
@@ -177,11 +175,9 @@ catch (IOException e) { showErrorMessage(e); }
 
 // ============================================================================
 
-private void showErrorMessage (Exception e) {
-    
-    showMessageDialog(mainWindow, "Відбулася критична помилка!\n"
-                                 + e.getMessage(), "Помилка", 0);
-}
+private void showErrorMessage (Exception e)
+  { showMessageDialog(mainWindow, "Відбулася критична помилка!\n"
+                                 + e.getMessage(), "Помилка", 0); }
 
 // Кінець класу RawProcessor ==================================================
 

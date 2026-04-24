@@ -34,7 +34,6 @@ public static int from565to888rgb (short rgb565) {
     int b8 = (b5 * 255) / 31;       // 8 байт
     
     return (r8 << 16) | (g8 << 8) | b8;
-
 }
 
 // ============================================================================
@@ -53,7 +52,6 @@ public static short from888to565rgb (int rgb888) {
     int b5 = (b8 * 31 + 127) / 255; // 5 байт
     
     return (short) ((r5 << 11) | (g6 << 5) | b5);
-
 }
 
 // ============================================================================
@@ -61,10 +59,8 @@ public static short from888to565rgb (int rgb888) {
 /// @param c символ
 /// @return код символу в кодуванні cp1251
 
-public static int fromCP1251CharToCode (char c) {
-    
-    return String.valueOf(c).getBytes(Charset.forName("cp1251"))[0] & 0xFF;
-}
+public static int fromCP1251CharToCode (char c)
+  { return String.valueOf(c).getBytes(Charset.forName("cp1251"))[0] & 0xFF; }
 
 // ============================================================================
 /// Отримання символу за його кодом в кодуванні cp1251
@@ -92,14 +88,10 @@ public static String fromCharToString (char c) {
         result.equals(":")  || result.equals("*")  ||
         result.equals("?")  || result.equals("\"") ||
         result.equals("<")  || result.equals(">")  ||
-        result.equals("|")  || result.equals("_")) {
-        
-        result = Integer.toString(Utils.fromCP1251CharToCode(c));
-    
-    }
+        result.equals("|")  || result.equals("_"))
+      { result = Integer.toString(Utils.fromCP1251CharToCode(c)); }
     
     return result;
-
 }
 
 // ============================================================================
@@ -124,17 +116,17 @@ try (ByteArrayInputStream bais = new ByteArrayInputStream(compressed);
      DeflateCompressorInputStream dis = new DeflateCompressorInputStream(bais);
      ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
-    int n;
-    byte[] byteBuffer = new byte[8192];
-    
-    while ((n = dis.read(byteBuffer)) != -1) { baos.write(byteBuffer, 0, n); }
-    
-    return baos.toByteArray();
+  int n;
+  byte[] byteBuffer = new byte[8192];
+
+  while ((n = dis.read(byteBuffer)) != -1) { baos.write(byteBuffer, 0, n); }
+
+  return baos.toByteArray();
 }
 
-catch (Exception e)
-    { err.println("zlib decompress error");
-      return null; }
+catch (Exception _)
+  { err.println("zlib decompress error");
+    return null; }
 
 }
 
@@ -147,12 +139,12 @@ public static byte[] bzip2Compress (byte[] decompressed) {
 
 ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-try (BZip2CompressorOutputStream bzos = new BZip2CompressorOutputStream(baos))
-    { bzos.write(decompressed); }
+try (var bzos = new BZip2CompressorOutputStream(baos))
+  { bzos.write(decompressed); }
 
 catch (Exception e)
-    { err.println("bzip2 compress error");
-      return null; }
+  { err.println("bzip2 compress error");
+    return null; }
 
 return baos.toByteArray();
 
@@ -169,17 +161,17 @@ try (ByteArrayInputStream bais = new ByteArrayInputStream(compressed);
      BZip2CompressorInputStream bzis = new BZip2CompressorInputStream(bais);
      ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
-    int n;
-    byte[] byteBuffer = new byte[8192];
-    
-    while ((n = bzis.read(byteBuffer)) != -1) { baos.write(byteBuffer, 0, n); }
-    
-    return baos.toByteArray();
+  int n;
+  byte[] byteBuffer = new byte[8192];
+
+  while ((n = bzis.read(byteBuffer)) != -1) { baos.write(byteBuffer, 0, n); }
+
+  return baos.toByteArray();
 }
 
-catch (Exception e)
-    { err.println("bzip2 decompress error");
-      return null; }
+catch (Exception _)
+  { err.println("bzip2 decompress error");
+    return null; }
 
 }
 
@@ -196,7 +188,6 @@ public static void selectCell (JTable table, int col, int row) {
 
     Rectangle rect = table.getCellRect(row, col, true);
     table.scrollRectToVisible(rect);
-
 }
 
 // ============================================================================
@@ -219,7 +210,6 @@ public static JFileChooser getFileChooser (String ext, int selectionMode,
     chooser.setCurrentDirectory(HOME_DIR);
     
     return chooser;
-
 }
 
 // ============================================================================
@@ -233,14 +223,13 @@ public static File getLastDir (JFileChooser chooser) {
     
     // Якщо останього файлу немає - повертаємо null
     if (file == null)
-        { return null; }
+      { return null; }
     // Якщо останній файл є папкою - повертаємо батьківську папку
     else if (file.isDirectory())
-        { return new File(file.getParent()); }
+      { return new File(file.getParent()); }
     // Якщо останній файл є файлом - повертаємо шлях до його папки
     else
-        { return new File(file.getPath().replace(file.getName(), "")); }
-
+      { return new File(file.getPath().replace(file.getName(), "")); }
 }
 
 // ============================================================================
@@ -248,12 +237,10 @@ public static File getLastDir (JFileChooser chooser) {
 /// @param value текст із невикористовуваними символами
 /// @return текст із заміненими символами
 
-public static String replaceUnusedChars (String value) {
-    
-    return value.replace('’', '\'')
+public static String replaceUnusedChars (String value)
+  { return value.replace('’', '\'')
                 .replace('Ґ', 'Г')
-                .replace('ґ', 'г');
-}
+                .replace('ґ', 'г'); }
 
 // Кінець класу Utils =========================================================
 

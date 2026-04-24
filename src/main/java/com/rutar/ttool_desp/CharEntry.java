@@ -9,11 +9,11 @@ import java.nio.*;
 
 public class CharEntry {
 
-private char charC; // символ
-private int  charX; // горизонтальний зсув символу
-private int  charW; // ширина символу
-private int  indL;  // відступ ліворуч від символу
-private int  indR;  // відступ праворуч від символу
+private char charC;                                                   // символ
+private int  charX;                              // горизонтальний зсув символу
+private int  charW;                                           // ширина символу
+private int  indL;                               // відступ ліворуч від символу
+private int  indR;                              // відступ праворуч від символу
 
 // ============================================================================
 /// Конструктор за замовчуванням
@@ -23,14 +23,12 @@ private int  indR;  // відступ праворуч від символу
 /// @param indL відступ ліворуч від символу
 /// @param indR відступ праворуч від символу
 
-public CharEntry (char charC, int charX, int charW, int indL, int indR) {
-    
-    this.charC = charC;
+public CharEntry (char charC, int charX, int charW, int indL, int indR)
+  { this.charC = charC;
     this.charX = charX;
     this.charW = charW;
     this.indL = indL;
-    this.indR = indR;
-}
+    this.indR = indR; }
 
 // ============================================================================
 
@@ -60,14 +58,12 @@ public void setUnknownTwo (int indR) { this.indR = indR; }
 // ============================================================================
 
 @Override
-public String toString() {
-    
-       return "\"" + getChar()       + "\" - "
-                   + getCharX()      + ", "
-                   + getCharW()      + ", "
-                   + getIndentLeft() + ", "
-                   + getIndentRight();
-}
+public String toString()
+  { return "\"" + getChar()       + "\" - "
+                + getCharX()      + ", "
+                + getCharW()      + ", "
+                + getIndentLeft() + ", "
+                + getIndentRight(); }
 
 // ============================================================================
 
